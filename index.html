@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Kaffe & Logikk: korte øvekort, animasjoner og artikler i Java (DAT100) og diskret matematikk (MAT101).">
+<meta name="theme-color" content="#050914">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FA9247'/%3E%3Cstop offset='1' stop-color='%23E94C96'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23050914'/%3E%3Ctext x='32' y='45' font-size='38' font-family='Arial' font-weight='700' text-anchor='middle' fill='url(%23g)'%3E%26amp;%3C/text%3E%3C/svg%3E">
+<style>
+:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Kaffe & Logikk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one full-height card per question, vertical snap scroll like a short-video feed; slim sticky header with filters and score */
+/* Deliberately one look: near-black navy with bright coral orange (Java) and hot pink (math) */
+:root {
+  --bg: #050914;
+  --surface: #0c1222;
+  --ink: #eef1f8;
+  --muted: #8d97b0;
+  --line: #1b2440;
+  --java: #FA9247;
+  --math: #E94C96;
+  --good: #4fd18b;
+  --good-bg: #0e2a1e;
+  --bad: #ff6b6b;
+  --bad-bg: #2e1219;
+  --code-bg: #080e1c;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.5;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  flex: none; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 8px; display: grid; gap: 8px;
+}
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.01em; }
+.countdown { color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.countdown b { color: var(--ink); }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  font: 700 0.85rem var(--body); border: 1px solid var(--line); background: transparent; color: var(--ink);
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
+}
+.tab[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.tab:focus-visible, .opt:focus-visible, .btn:focus-visible { outline: 3px solid var(--math); outline-offset: 2px; }
+.stats { display: flex; gap: 14px; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--ink); }
+.progress { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress span { display: block; height: 100%; width: 0; background: var(--ink); transition: width .3s; }
+
+#feed { flex: 1; min-height: 0; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; }
+.card {
+  min-height: 100%; scroll-snap-align: start; display: flex; align-items: center; justify-content: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px;
+}
+.card.java { --accent: var(--java); }
+.card.math { --accent: var(--math); }
+.inner { width: 100%; max-width: 560px; display: grid; gap: 16px; min-width: 0; }
+.meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.subj { color: var(--accent); font-weight: 700; }
+.q { font-family: var(--display); font-weight: 600; font-size: clamp(1.3rem, 4.6vw, 1.7rem); line-height: 1.25; text-wrap: balance; margin: 0; }
+pre {
+  margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  font: 0.92rem/1.55 var(--mono); overflow-x: auto; color: var(--ink);
+}
+code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.opts { display: grid; gap: 10px; }
+.opt {
+  display: flex; gap: 12px; align-items: center; text-align: left; width: 100%;
+  font: 1rem var(--body); color: var(--ink); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer;
+  transition: border-color .15s, transform .1s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:active:not(:disabled) { transform: scale(0.99); }
+.opt .k { flex: none; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; font: 600 0.8rem var(--mono); background: var(--code-bg); color: var(--muted); }
+.opt .t { min-width: 0; overflow-wrap: anywhere; }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good-bg); }
+.opt.right .k { background: var(--good); color: var(--surface); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+.opt.wrong .k { background: var(--bad); color: var(--surface); }
+.opt.dim { opacity: 0.55; }
+.fb { display: grid; gap: 12px; }
+.fb p { margin: 0; }
+.verdict { font-weight: 700; }
+.verdict.ok { color: var(--good); }
+.verdict.no { color: var(--bad); }
+.btn {
+  justify-self: start; font: 700 0.95rem var(--body); border: none; border-radius: 999px; padding: 10px 20px;
+  background: var(--accent, var(--ink)); color: var(--surface); cursor: pointer;
+}
+.hint { color: var(--muted); font-size: 0.8rem; text-align: center; }
+.end .q { font-size: clamp(1.6rem, 6vw, 2.2rem); }
+.big { font-family: var(--display); font-weight: 800; font-size: 3.2rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.amp { background: linear-gradient(135deg, var(--java), var(--math)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.java { --accent: var(--java); }
+.math { --accent: var(--math); }
+.nav { display: flex; gap: 4px; background: var(--code-bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.navbtn { font: 700 0.9rem var(--body); border: none; background: transparent; color: var(--muted); padding: 6px 16px; border-radius: 999px; cursor: pointer; }
+.navbtn[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.navbtn:focus-visible, .item:focus-visible, .lead:focus-visible, .back:focus-visible, .chip:focus-visible { outline: 3px solid var(--math); outline-offset: 2px; }
+.chip { font: 700 0.8rem var(--body); border: 1px solid var(--ink); background: var(--ink); color: var(--surface); padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+
+#read { flex: 1; min-height: 0; overflow-y: auto; }
+.wrap {
+  max-width: 1040px; margin: 0 auto; display: grid; gap: 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 72px;
+}
+.mast { display: grid; gap: 6px; }
+.mast h1 { font-family: var(--display); font-weight: 800; font-size: clamp(2.2rem, 7vw, 3.4rem); letter-spacing: -0.025em; line-height: 1; margin: 0; }
+.mast p { margin: 0; color: var(--muted); max-width: 60ch; }
+.kicker { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); }
+.headline { font-family: var(--display); font-weight: 800; line-height: 1.15; letter-spacing: -0.01em; margin: 0; text-wrap: balance; color: var(--ink); }
+.ingress { margin: 0; color: var(--muted); }
+.rt { font-size: 0.8rem; color: var(--muted); }
+.visual {
+  background: var(--accent); color: var(--surface); font-family: var(--mono); font-weight: 600;
+  display: grid; place-items: center; text-align: center; padding: 24px; min-height: 220px;
+  font-size: clamp(1.5rem, 4.5vw, 2.4rem); letter-spacing: -0.02em; overflow-wrap: anywhere;
+}
+.visual.sm { min-height: 76px; font-size: 0.78rem; padding: 8px; border-radius: 8px; letter-spacing: 0; }
+.lead {
+  display: grid; grid-template-columns: 1.15fr 1fr; text-align: left; width: 100%; padding: 0; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; font: inherit; color: inherit;
+}
+.lead .txt { padding: 26px; display: grid; gap: 10px; align-content: center; min-width: 0; }
+.lead .headline { font-size: clamp(1.6rem, 3.8vw, 2.3rem); }
+.lead:hover .headline, .item:hover .headline { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.col { display: grid; align-content: start; min-width: 0; }
+.col h2 { font-family: var(--display); font-weight: 800; font-size: 1.15rem; margin: 0; padding-bottom: 8px; border-bottom: 3px solid var(--ink); }
+.item {
+  display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: start; text-align: left; width: 100%;
+  padding: 16px 0; background: none; border: none; border-bottom: 1px solid var(--line); cursor: pointer; font: inherit; color: inherit;
+}
+.item .txt { display: grid; gap: 4px; min-width: 0; }
+.item .headline { font-size: 1.15rem; }
+.item .ingress { font-size: 0.92rem; }
+@media (max-width: 720px) { .lead, .cols { grid-template-columns: 1fr; } .lead .visual { min-height: 150px; } }
+
+.article { max-width: 680px; width: 100%; margin: 0 auto; display: grid; gap: 18px; min-width: 0; }
+.back { justify-self: start; font: 700 0.9rem var(--body); color: var(--muted); background: none; border: none; padding: 0; cursor: pointer; }
+.back:hover { color: var(--ink); }
+.article h1.headline { font-size: clamp(1.9rem, 5.5vw, 2.7rem); }
+.article .ingress { font-size: 1.2rem; font-weight: 700; color: var(--ink); line-height: 1.45; }
+.article .visual { border-radius: 14px; min-height: 170px; }
+.body { display: grid; gap: 16px; font-size: 1.07rem; line-height: 1.68; min-width: 0; }
+.body h3 { font-family: var(--display); font-weight: 800; font-size: 1.35rem; line-height: 1.25; margin: 14px 0 0; text-wrap: balance; }
+.body p, .body ul, .body ol { margin: 0; }
+.body ul, .body ol { padding-left: 1.3em; display: grid; gap: 6px; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.tbl th, .tbl td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl th { background: var(--code-bg); font-weight: 700; }
+.tip { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.tip .lbl { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); }
+.cta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px; border: 1.5px solid var(--accent); border-radius: 14px; }
+.cta p { margin: 0; flex: 1 1 220px; }
+.more h2 { font-family: var(--display); font-weight: 800; font-size: 1.15rem; margin: 12px 0 0; padding-bottom: 8px; border-bottom: 3px solid var(--ink); }
+.top { align-items: center; }
+.brand { margin-right: auto; }
+#today, #swipe { flex: 1; min-height: 0; overflow-y: auto; }
+.focusbtn { font: 700 0.85rem var(--body); background: transparent; color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.focusbtn:hover { border-color: var(--math); }
+.focuspill { display: none; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.focuspill b { font-family: var(--display); font-weight: 800; font-size: 1.25rem; color: var(--ink); }
+body.focus .focuspill { display: flex; }
+body.focus .nav, body.focus .focusbtn, body.focus .tabs { display: none; }
+.ghost { font: 700 0.9rem var(--body); background: transparent; color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px; padding: 9px 16px; cursor: pointer; }
+.ghost.sm { font-size: 0.8rem; padding: 5px 12px; }
+.ghost:hover:not(:disabled) { border-color: var(--accent, var(--math)); }
+.ghost:disabled { opacity: 0.35; cursor: default; }
+.ghost:focus-visible, .focusbtn:focus-visible, .bigstart:focus-visible, .short:focus-visible, .bl:focus-visible, a.btn:focus-visible { outline: 3px solid var(--math); outline-offset: 2px; }
+a.btn { display: inline-block; text-decoration: none; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.xpbar { display: block; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; flex: 1; min-width: 60px; }
+.xpbar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--java), var(--math)); transition: width .4s; }
+.xpbar.mini { flex: none; width: 64px; height: 6px; align-self: center; }
+
+/* code tracer */
+.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 0; font: 0.9rem/1.55 var(--mono); overflow-x: auto; }
+.ln { display: flex; gap: 12px; padding: 1px 14px; white-space: pre; transition: background .15s; min-width: max-content; }
+.ln .no, .bl .no { color: var(--muted); width: 1.6em; text-align: right; flex: none; user-select: none; }
+.ln.on { background: color-mix(in srgb, var(--accent) 24%, transparent); box-shadow: inset 3px 0 0 var(--accent); }
+.vars { display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px; }
+.var { font: 0.85rem var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; }
+.var b { color: var(--accent); font-weight: 600; }
+.out { font: 0.9rem var(--mono); color: var(--muted); }
+.out b { color: var(--ink); }
+.note { margin: 0; min-height: 3em; }
+.ctrl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.count { color: var(--muted); font-size: 0.85rem; margin-left: auto; font-variant-numeric: tabular-nums; }
+.tt td.hid { color: var(--muted); }
+.tt tr.on td { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.tt .hl { color: var(--accent); font-weight: 700; }
+
+/* finn feilen */
+.bugcode { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 0; overflow-x: auto; display: grid; }
+.bl { display: flex; gap: 12px; width: 100%; min-width: max-content; text-align: left; background: none; border: none; color: var(--ink); font: 0.9rem/1.55 var(--mono); padding: 3px 14px; cursor: pointer; white-space: pre; }
+.bl:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.bl:disabled { cursor: default; }
+.bl.right { background: var(--good-bg); box-shadow: inset 3px 0 0 var(--good); }
+.bl.wrong { background: var(--bad-bg); box-shadow: inset 3px 0 0 var(--bad); }
+
+/* video */
+.play { aspect-ratio: 16 / 9; max-width: 100%; border-radius: 14px; display: grid; place-items: center; text-decoration: none;
+  background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--accent) 70%, var(--bg)), var(--surface) 70%); border: 1px solid var(--line); }
+.play i { width: 76px; height: 76px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+.play i::after { content: ""; width: 0; height: 0; border-left: 24px solid var(--bg); border-top: 15px solid transparent; border-bottom: 15px solid transparent; margin-left: 6px; }
+.play:hover i { transform: scale(1.06); }
+.seen { color: var(--good); font-weight: 700; }
+
+/* swipe */
+.swrap { max-width: 460px; margin: 0 auto; display: grid; gap: 18px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 40px; }
+.swinfo { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.stack { position: relative; height: min(58vh, 430px); min-height: 300px; }
+.flash { position: absolute; inset: 0; background: var(--surface); border: 1.5px solid var(--line); border-radius: 22px; padding: 26px 22px;
+  display: grid; grid-template-rows: auto 1fr auto; gap: 12px; touch-action: pan-y; user-select: none; cursor: grab;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); transition: transform .22s ease, opacity .22s ease, border-color .2s; }
+.flash.dragging { transition: none; cursor: grabbing; }
+.flash.under { transform: scale(0.94) translateY(16px); opacity: 0.55; pointer-events: none; }
+.flash.flipped { border-color: var(--accent); }
+.face { align-self: center; text-align: center; text-wrap: balance; overflow-wrap: anywhere; }
+.face.front { font-family: var(--display); font-weight: 600; font-size: clamp(1.3rem, 5vw, 1.7rem); line-height: 1.3; }
+.face.back { font-size: 1.15rem; line-height: 1.5; }
+.tap { text-align: center; color: var(--muted); font-size: 0.8rem; }
+.stamp { position: absolute; top: 20px; font: 800 1rem var(--display); padding: 3px 12px; border: 2px solid; border-radius: 8px; opacity: 0; }
+.stamp.yes { right: 20px; color: var(--good); transform: rotate(8deg); }
+.stamp.no { left: 20px; color: var(--bad); transform: rotate(-8deg); }
+.swctrl { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; }
+.swctrl .no-btn { color: var(--bad); border-color: var(--bad); }
+.swctrl .yes-btn { color: var(--good); border-color: var(--good); }
+
+/* dagens */
+.dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel h2 { font-family: var(--display); font-weight: 800; font-size: 1.1rem; margin: 0; }
+.plabel { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.bigstart { justify-self: start; font: 800 1.2rem var(--display); color: var(--bg); background: linear-gradient(120deg, var(--java), var(--math));
+  border: none; border-radius: 999px; padding: 15px 30px; cursor: pointer; }
+.bigstart:hover { filter: brightness(1.08); }
+.donepill { color: var(--good); font-weight: 700; }
+.streaknum { font-family: var(--display); font-weight: 800; font-size: 3.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal .h { font-size: 0.68rem; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
+.day { aspect-ratio: 1; max-width: 100%; border-radius: 8px; background: var(--code-bg); border: 1px solid var(--line); }
+.day.done { background: linear-gradient(135deg, var(--java), var(--math)); border-color: transparent; }
+.day.today { outline: 2px solid var(--ink); outline-offset: 1px; }
+.day.future { opacity: 0.25; }
+.lvlrow { display: flex; align-items: baseline; gap: 10px; }
+.lvl { font-family: var(--display); font-weight: 800; font-size: 2.6rem; line-height: 1; }
+.shorts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.short { text-align: left; background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; color: var(--ink); font: inherit; cursor: pointer; display: grid; gap: 2px; }
+.short:hover { border-color: var(--math); }
+.short b { font-size: 0.95rem; }
+.short span { color: var(--muted); font-size: 0.8rem; }
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.badge { display: grid; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.badge b { font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+.badge b::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; }
+.badge.on { border-color: color-mix(in srgb, var(--math) 60%, var(--line)); }
+.badge.on b::before { background: linear-gradient(135deg, var(--java), var(--math)); }
+.badge span { color: var(--muted); font-size: 0.78rem; }
+.badge.off { opacity: 0.5; }
+
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 50;
+  background: var(--ink); color: var(--bg); font: 700 0.9rem var(--body); padding: 10px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,.4); max-width: calc(100% - 32px); text-align: center; }
+#modal { position: fixed; inset: 0; z-index: 60; background: rgba(2, 4, 10, 0.72); display: grid; place-items: center; padding: 16px; }
+.mbox { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; max-width: 420px; width: 100%; display: grid; gap: 12px; }
+.mbox h2 { font-size: 1.6rem; }
+.mbox p { margin: 0; color: var(--muted); }
+@media (max-width: 420px) { .shorts { grid-template-columns: 1fr; } .navbtn { padding: 6px 12px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand"><span style="color: var(--java)">Kaffe</span> <span class="amp">&amp;</span> <span style="color: var(--math)">Logikk</span></div>
+    <nav class="nav" aria-label="Visning">
+      <button class="navbtn" id="nav-today" data-view="today" aria-pressed="true">Dagens</button>
+      <button class="navbtn" id="nav-ov" data-view="quiz" aria-pressed="false">Øv</button>
+      <button class="navbtn" id="nav-les" data-view="read" aria-pressed="false">Les</button>
+    </nav>
+    <button class="focusbtn" id="focusBtn" type="button">Fokus 10 min</button>
+    <div class="focuspill" id="focusPill"><span>Fokus</span><b id="focusTime">10:00</b><button class="ghost sm" id="focusStop" type="button">Avslutt</button></div>
+  </div>
+  <div class="bar" id="quizbar" hidden>
+    <div class="tabs" role="group" aria-label="Velg øvemåte">
+      <button class="tab" id="tab-alle" data-mode="alle" aria-pressed="true">Alle</button>
+      <button class="tab" id="tab-java" data-mode="java" aria-pressed="false">Java</button>
+      <button class="tab" id="tab-math" data-mode="math" aria-pressed="false">Matte</button>
+      <button class="tab" id="tab-swipe" data-mode="swipe" aria-pressed="false">Swipe</button>
+      <button class="tab" id="tab-feil" data-mode="feil" aria-pressed="false">Øv på feil</button>
+      <button class="chip" id="topicChip" type="button" hidden></button>
+    </div>
+    <div class="stats"><span>Nivå <b id="lvl">1</b></span><span class="xpbar mini" aria-hidden="true"><span id="xpfill"></span></span><span>Rekke <b id="streak">0</b></span></div>
+  </div>
+  <div class="progress" id="progwrap" hidden><span id="prog"></span></div>
+</header>
+<main id="today"></main>
+<main id="feed" aria-live="polite" hidden></main>
+<main id="swipe" hidden></main>
+<main id="read" hidden></main>
+<div id="toast" role="status" hidden></div>
+<div id="modal" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 class="headline" id="mTitle"></h2><p id="mText"></p><button class="bigstart" id="mOk" type="button">OK</button></div></div>
+
+<script>
+const Q = [
+  // ---------- JAVA (DAT100) ----------
+  {s:'java',t:'Heltallsdivisjon',q:'Hva skrives ut?',c:'int x = 7 / 2;\nSystem.out.println(x);',o:['3','3.5','4','3.0'],a:0,w:'Når begge tallene er `int`, blir det heltallsdivisjon. Desimalene kuttes bort, så 7 / 2 blir 3.'},
+  {s:'java',t:'Heltallsdivisjon',q:'Hva skrives ut?',c:'double d = 7 / 2;\nSystem.out.println(d);',o:['3.5','3.0','3','Kompileringsfeil'],a:1,w:'`7 / 2` regnes ut som int først (3), og så gjøres 3 om til double: 3.0. Skriv `7.0 / 2` for å få 3.5.'},
+  {s:'java',t:'Modulo',q:'Hva skrives ut?',c:'System.out.println(10 % 3);',o:['3','1','0','3.33'],a:1,w:'`%` gir resten. 10 = 3·3 + 1, så resten er 1.'},
+  {s:'java',t:'Løkker',q:'Hva er verdien til sum etter løkka?',c:'int sum = 0;\nfor (int i = 0; i < 5; i++) {\n    sum += i;\n}',o:['15','10','5','14'],a:1,w:'i går fra 0 til 4 (5 er ikke med). 0 + 1 + 2 + 3 + 4 = 10.'},
+  {s:'java',t:'Løkker',q:'Hva er i etter løkka?',c:'int i = 10;\nwhile (i > 0) {\n    i -= 3;\n}',o:['1','0','-2','-3'],a:2,w:'i blir 10 → 7 → 4 → 1 → -2. Først når i er -2, er `i > 0` usann.'},
+  {s:'java',t:'Løkker',q:'Hvor mange stjerner skrives ut?',c:'for (int i = 0; i < 3; i++) {\n    for (int j = 0; j < 4; j++) {\n        System.out.print("*");\n    }\n}',o:['7','12','16','9'],a:1,w:'Den ytre løkka går 3 ganger, den indre 4 ganger hver gang: 3 · 4 = 12.'},
+  {s:'java',t:'Løkker',q:'Hva er spesielt med en do-while-løkke?',o:['Den kjører aldri hvis betingelsen er usann','Kroppen kjører alltid minst én gang','Den kan bare brukes med tabeller','Den sjekker betingelsen to ganger'],a:1,w:'I `do { ... } while (b);` sjekkes betingelsen etter kroppen, så kroppen kjører alltid minst én gang.'},
+  {s:'java',t:'Strenger',q:'Hva skrives ut?',c:'String s = "Java";\nSystem.out.println(s.length());',o:['3','4','5','Java'],a:1,w:'`length()` gir antall tegn. "Java" har 4.'},
+  {s:'java',t:'Strenger',q:'Hva skrives ut?',c:'System.out.println("Java".charAt(1));',o:['J','a','v','Feil: indeks starter på 1'],a:1,w:'Indekser starter på 0. Indeks 0 er J, indeks 1 er a.'},
+  {s:'java',t:'Strenger',q:'Hva skrives ut?',c:'System.out.println("a" + 1 + 2);',o:['a3','a12','3a','Kompileringsfeil'],a:1,w:'Java leser fra venstre. "a" + 1 blir strengen "a1", og så "a1" + 2 blir "a12".'},
+  {s:'java',t:'Strenger',q:'Hva skrives ut?',c:'System.out.println(1 + 2 + "a");',o:['12a','3a','a3','33'],a:1,w:'Fra venstre: 1 + 2 er tall og blir 3. Så 3 + "a" blir "3a".'},
+  {s:'java',t:'Strenger',q:'Hva skrives ut?',c:'String a = new String("hei");\nString b = new String("hei");\nSystem.out.println(a == b);',o:['true','false','hei','Kompileringsfeil'],a:1,w:'`==` sjekker om det er samme objekt, ikke samme innhold. Bruk `a.equals(b)` for å sammenligne teksten.'},
+  {s:'java',t:'Tabeller',q:'Hva er a[0]?',c:'int[] a = new int[5];',o:['null','0','Udefinert','5'],a:1,w:'En ny int-tabell fylles med standardverdien 0.'},
+  {s:'java',t:'Tabeller',q:'Hva skjer?',c:'int[] a = {3, 1, 4};\nSystem.out.println(a[3]);',o:['Skriver 4','Skriver 0','ArrayIndexOutOfBoundsException','Kompileringsfeil'],a:2,w:'Tabellen har lengde 3, så gyldige indekser er 0, 1 og 2. a[3] gir et unntak når programmet kjører.'},
+  {s:'java',t:'Tabeller',q:'Hva skrives ut?',c:'int[] t = {2, 4, 6};\nint sum = 0;\nfor (int x : t) {\n    sum += x;\n}\nSystem.out.println(sum);',o:['6','12','3','246'],a:1,w:'for-each går gjennom hvert element: 2 + 4 + 6 = 12.'},
+  {s:'java',t:'ArrayList',q:'Hva skrives ut?',c:'ArrayList<Integer> l = new ArrayList<>();\nl.add(4);\nl.add(7);\nl.remove(0);\nSystem.out.println(l);',o:['[4]','[7]','[4, 7]','[]'],a:1,w:'`remove(0)` fjerner elementet på indeks 0, altså 4. Igjen er [7].'},
+  {s:'java',t:'Operatorer',q:'Hva skrives ut?',c:'int x = 5;\nx++;\nx += 2;\nSystem.out.println(x);',o:['7','8','6','5'],a:1,w:'x++ gjør x til 6, og x += 2 gjør den til 8.'},
+  {s:'java',t:'Logikk',q:'Hva er b?',c:'boolean b = (5 > 3) && (2 > 4);',o:['true','false'],a:1,w:'`&&` krever at begge er sanne. 2 > 4 er usann, så b er false.'},
+  {s:'java',t:'Logikk',q:'Hva er b?',c:'boolean b = !(3 > 2) || (5 == 5);',o:['true','false'],a:0,w:'!(3 > 2) er false, men 5 == 5 er true. false || true = true.'},
+  {s:'java',t:'Betingelser',q:'Hva er y?',c:'int y = (4 > 2) ? 10 : 20;',o:['10','20','4','true'],a:0,w:'Betingelsen er sann, så verdien før kolon (10) velges.'},
+  {s:'java',t:'Switch',q:'Hva skrives ut?',c:'int k = 2;\nswitch (k) {\n    case 1: System.out.print("A");\n    case 2: System.out.print("B");\n    case 3: System.out.print("C");\n}',o:['B','BC','ABC','C'],a:1,w:'Uten `break` faller programmet videre til neste case. Det starter på case 2 og skriver B og så C.'},
+  {s:'java',t:'Typer',q:'Hva skrives ut?',c:'System.out.println((int) 3.99);',o:['4','3','3.99','Kompileringsfeil'],a:1,w:'Casting til int kutter desimalene. Det rundes ikke av.'},
+  {s:'java',t:'Typer',q:'Hva skrives ut?',c:'System.out.println(Math.pow(2, 3));',o:['8','8.0','6','9'],a:1,w:'`Math.pow` returnerer alltid double, så svaret skrives som 8.0.'},
+  {s:'java',t:'Metoder',q:'Hva returnerer dobbel(dobbel(3))?',c:'public static int dobbel(int x) {\n    return 2 * x;\n}',o:['6','9','12','18'],a:2,w:'Den innerste regnes først: dobbel(3) = 6. Så dobbel(6) = 12.'},
+  {s:'java',t:'Rekursjon',q:'Hva returnerer f(4)?',c:'public static int f(int n) {\n    if (n == 0) return 0;\n    return n + f(n - 1);\n}',o:['4','10','24','0'],a:1,w:'f(4) = 4 + f(3) = 4 + 3 + 2 + 1 + 0 = 10.'},
+  {s:'java',t:'Metoder',q:'Hva betyr det at to metoder er overlastet (overloading)?',o:['De har samme navn, men ulike parametere','De ligger i ulike klasser','Den ene arver den andre','De har samme navn og samme parametere'],a:0,w:'Overlasting betyr samme metodenavn med ulik parameterliste, for eksempel `print(int)` og `print(String)`.'},
+  {s:'java',t:'Klasser',q:'Hva kjennetegner en konstruktør?',o:['Den har returtypen void','Den har samme navn som klassen og ingen returtype','Den må være static','Den kalles med klassens navn uten new'],a:1,w:'En konstruktør heter det samme som klassen, har ingen returtype og kjøres når du skriver `new`.'},
+  {s:'java',t:'Klasser',q:'Hvem kan bruke et felt som er private?',o:['Alle klasser','Bare klasser i samme pakke','Bare koden inne i samme klasse','Bare subklasser'],a:2,w:'`private` betyr at bare klassen selv kan se feltet. Andre bruker get- og set-metoder.'},
+  {s:'java',t:'Klasser',q:'Hva er standardverdien til et String-felt som ikke er gitt noen verdi?',o:['""','null','0','"null"'],a:1,w:'Felt av objekttyper, som String, starter som `null`.'},
+  {s:'java',t:'Klasser',q:'Hva betyr this inne i en metode?',o:['Klassen selv','Objektet metoden kalles på','Forrige objekt som ble laget','Superklassen'],a:1,w:'`this` peker på det objektet metoden kjører for. Vanlig i konstruktører: `this.navn = navn;`.'},
+  {s:'java',t:'Klasser',q:'Hva betyr static på en metode?',o:['Den kan ikke endres','Den tilhører klassen og kalles uten objekt','Den kan bare kalles én gang','Den er privat'],a:1,w:'En static-metode kalles på klassen, for eksempel `Math.max(3, 8)`, uten å lage et objekt.'},
+  {s:'java',t:'Arv',q:'Hvilket nøkkelord bruker en klasse for å arve fra en annen klasse?',o:['implements','extends','inherits','super'],a:1,w:'`class Hund extends Dyr`. `implements` brukes for grensesnitt (interface).'},
+  {s:'java',t:'Arv',q:'Hva betyr final på en variabel?',o:['Den er privat','Verdien kan ikke endres etter at den er satt','Den slettes etter bruk','Den er static'],a:1,w:'En final-variabel får verdi én gang og kan ikke endres etterpå.'},
+
+  // ---------- DISKRET MATEMATIKK (MAT101) ----------
+  {s:'math',t:'Logikk',q:'Når er p → q usann?',o:['p usann, q sann','p sann, q usann','Begge usanne','Begge sanne'],a:1,w:'En implikasjon er bare usann når forutsetningen er sann og konklusjonen usann. Et løfte brytes bare da.'},
+  {s:'math',t:'Logikk',q:'Hva er sannhetsverdien til p → q når p er usann?',o:['Alltid sann','Alltid usann','Samme som q','Kan ikke avgjøres'],a:0,w:'Med usann forutsetning er implikasjonen alltid sann. Dette kalles tomt sann (vacuously true).'},
+  {s:'math',t:'Logikk',q:'Hva er ekvivalent med ¬(p ∧ q)?',o:['¬p ∧ ¬q','¬p ∨ ¬q','p ∨ q','¬p → q'],a:1,w:'De Morgans lov: negasjonen av «og» blir «eller» av negasjonene.'},
+  {s:'math',t:'Logikk',q:'Hva er ekvivalent med p → q?',o:['q → p','¬p → ¬q','¬p ∨ q','p ∧ ¬q'],a:2,w:'p → q er bare usann når p er sann og q usann. Det er nøyaktig det samme som ¬p ∨ q.'},
+  {s:'math',t:'Logikk',q:'Hva er kontrapositiven til p → q?',o:['q → p','¬p → ¬q','¬q → ¬p','¬(p → q)'],a:2,w:'Kontrapositiven ¬q → ¬p er alltid ekvivalent med p → q. Den omvendte, q → p, er det ikke.'},
+  {s:'math',t:'Logikk',q:'Hvor mange rader har en sannhetstabell med 3 variabler?',o:['3','6','8','9'],a:2,w:'Hver variabel kan være sann eller usann: 2³ = 8 rader.'},
+  {s:'math',t:'Logikk',q:'Når er p ⊕ q (eksklusiv eller) sann?',o:['Når begge er sanne','Når nøyaktig én er sann','Når minst én er sann','Når begge er usanne'],a:1,w:'XOR er sann når p og q er forskjellige, altså nøyaktig én av dem er sann.'},
+  {s:'math',t:'Logikk',q:'Hva er p ∨ ¬p?',o:['En tautologi','En kontradiksjon','Kontingent','Ekvivalent med p'],a:0,w:'Enten er p sann, eller så er ¬p sann. Uttrykket er alltid sant, altså en tautologi.'},
+  {s:'math',t:'Predikatlogikk',q:'Hva er ekvivalent med ¬∀x P(x)?',o:['∀x ¬P(x)','∃x ¬P(x)','∃x P(x)','¬∃x P(x)'],a:1,w:'«Ikke alle har P» betyr «det finnes minst én som ikke har P».'},
+  {s:'math',t:'Predikatlogikk',q:'Hva er ekvivalent med ¬∃x P(x)?',o:['∀x ¬P(x)','∃x ¬P(x)','∀x P(x)','¬∀x ¬P(x)'],a:0,w:'«Det finnes ingen med P» betyr «alle mangler P».'},
+  {s:'math',t:'Mengder',q:'|A| = 5, |B| = 4 og |A ∩ B| = 2. Hva er |A ∪ B|?',o:['9','7','11','3'],a:1,w:'Inklusjon–eksklusjon: |A ∪ B| = |A| + |B| − |A ∩ B| = 5 + 4 − 2 = 7.'},
+  {s:'math',t:'Mengder',q:'Hvor mange delmengder har en mengde med 4 elementer?',o:['4','8','16','24'],a:2,w:'Hvert element er enten med eller ikke: 2⁴ = 16. Både ∅ og hele mengden teller.'},
+  {s:'math',t:'Mengder',q:'A = {1, 2, 3} og B = {2, 3, 4}. Hva er A − B?',o:['{1}','{4}','{1, 4}','{2, 3}'],a:0,w:'A − B er elementene i A som ikke er i B. Bare 1.'},
+  {s:'math',t:'Mengder',q:'|A| = 3 og |B| = 4. Hva er |A × B|?',o:['7','12','64','81'],a:1,w:'Det kartesiske produktet har ett par for hver kombinasjon: 3 · 4 = 12. Samme idé som Haskell-oppgaven med t1 og t2.'},
+  {s:'math',t:'Mengder',q:'Er ∅ ⊆ A for enhver mengde A?',o:['Ja, alltid','Bare hvis A er tom','Nei, aldri','Bare hvis A er endelig'],a:0,w:'Det finnes ingen elementer i ∅ som ikke er i A, så påstanden er tomt sann.'},
+  {s:'math',t:'Tallteori',q:'Hva er 17 mod 5?',o:['2','3','12','1'],a:0,w:'17 = 3 · 5 + 2, så resten er 2.'},
+  {s:'math',t:'Tallteori',q:'Hva er 3⁴ mod 5?',o:['1','4','2','3'],a:0,w:'3⁴ = 81, og 81 = 16 · 5 + 1. Resten er 1.'},
+  {s:'math',t:'Tallteori',q:'Hva er gcd(48, 18)?',o:['2','3','6','18'],a:2,w:'Euklids algoritme: 48 = 2·18 + 12, 18 = 1·12 + 6, 12 = 2·6 + 0. Siste rest ulik 0 er 6.'},
+  {s:'math',t:'Tallteori',q:'Er 91 et primtall?',o:['Ja','Nei, 91 = 7 · 13','Nei, 91 = 3 · 31','Nei, 91 = 9 · 11'],a:1,w:'91 = 7 · 13. Sjekk alltid primtall opp til √91 ≈ 9,5.'},
+  {s:'math',t:'Tallsystemer',q:'Hva er 1011₂ i titallssystemet?',o:['9','11','13','1011'],a:1,w:'1·8 + 0·4 + 1·2 + 1·1 = 11.'},
+  {s:'math',t:'Tallsystemer',q:'Hva er 25 i totallssystemet?',o:['11001','10101','11010','10011'],a:0,w:'25 = 16 + 8 + 1, altså 1·16 + 1·8 + 0·4 + 0·2 + 1·1 = 11001.'},
+  {s:'math',t:'Kombinatorikk',q:'På hvor mange måter kan 4 personer stå i kø?',o:['4','16','24','12'],a:2,w:'Permutasjoner: 4! = 4 · 3 · 2 · 1 = 24.'},
+  {s:'math',t:'Kombinatorikk',q:'Hva er C(5, 2), altså 5 over 2?',o:['10','20','25','7'],a:0,w:'C(5,2) = 5! / (2! · 3!) = (5 · 4) / 2 = 10.'},
+  {s:'math',t:'Kombinatorikk',q:'På hvor mange måter kan du velge 3 av 6 personer til en gruppe?',o:['18','20','120','216'],a:1,w:'Rekkefølgen spiller ingen rolle: C(6,3) = (6 · 5 · 4) / (3 · 2 · 1) = 20.'},
+  {s:'math',t:'Kombinatorikk',q:'Hvor mange personer må du ha for å være sikker på at to har bursdag i samme måned?',o:['12','13','24','2'],a:1,w:'Dueslagsprinsippet: 12 måneder er 12 «slag». Med 13 personer må minst to havne i samme slag.'},
+  {s:'math',t:'Funksjoner',q:'f: ℤ → ℤ, f(x) = 2x + 1. Hva stemmer?',o:['Bijektiv','Injektiv, men ikke surjektiv','Surjektiv, men ikke injektiv','Verken injektiv eller surjektiv'],a:1,w:'Ulike x gir ulike verdier, så f er injektiv. Men f gir bare oddetall, så for eksempel 2 nås aldri. Den er ikke surjektiv.'},
+  {s:'math',t:'Funksjoner',q:'Hva betyr det at en funksjon er injektiv?',o:['Alle verdier i kodomenet nås','Ulike input gir alltid ulik output','Den har en invers på hele kodomenet','Den er voksende'],a:1,w:'Injektiv (en-til-en): f(a) = f(b) gir a = b. Ingen to input deler output.'},
+  {s:'math',t:'Relasjoner',q:'Hvilke egenskaper har ≤ på heltallene?',o:['Refleksiv, symmetrisk, transitiv','Refleksiv, antisymmetrisk, transitiv','Bare transitiv','Symmetrisk og transitiv'],a:1,w:'a ≤ a, a ≤ b og b ≤ a gir a = b, og a ≤ b ≤ c gir a ≤ c. Det er en partiell ordning.'},
+  {s:'math',t:'Relasjoner',q:'«Har samme fødselsår som» er en ...',o:['Partiell ordning','Ekvivalensrelasjon','Funksjon','Verken eller'],a:1,w:'Den er refleksiv, symmetrisk og transitiv. Ekvivalensklassene er årskullene.'},
+  {s:'math',t:'Summer',q:'Hva er 1 + 2 + 3 + … + 10?',o:['50','55','100','45'],a:1,w:'Formelen n(n+1)/2 gir 10 · 11 / 2 = 55.'},
+  {s:'math',t:'Summer',q:'Hva er 1 + 2 + 4 + 8 + 16?',o:['30','31','32','63'],a:1,w:'Geometrisk sum: 1 + 2 + … + 2ⁿ = 2ⁿ⁺¹ − 1. Med n = 4 blir det 2⁵ − 1 = 31.'},
+  {s:'math',t:'Rekursjon',q:'a₀ = 0 og aₙ = 2aₙ₋₁ + 1. Hva er a₃?',o:['3','5','7','15'],a:2,w:'a₁ = 1, a₂ = 3, a₃ = 7. (Generelt aₙ = 2ⁿ − 1.)'},
+  {s:'math',t:'Induksjon',q:'Hva viser du i induksjonstrinnet?',o:['At P(1) er sann','At P(k) → P(k+1)','At P(n) er sann for alle n direkte','At P(k+1) → P(k)'],a:1,w:'Basissteget viser P(1) (eller P(n₀)). Induksjonstrinnet antar P(k) og viser P(k+1).'},
+  {s:'math',t:'Grafer',q:'En graf har 5 kanter. Hva er summen av alle gradene?',o:['5','10','25','Kommer an på antall noder'],a:1,w:'Håndtrykklemmaet: hver kant gir 2 til gradsummen. 2 · 5 = 10.'},
+  {s:'math',t:'Grafer',q:'Hvor mange kanter har den komplette grafen K₅?',o:['5','10','20','25'],a:1,w:'Hvert par av noder har en kant: C(5,2) = 10.'},
+  {s:'math',t:'Algoritmer',q:'To nøstede løkker som begge går n ganger. Hva er tidskompleksiteten?',o:['O(n)','O(2n)','O(n²)','O(log n)'],a:2,w:'Den indre løkka kjører n ganger for hver av de n rundene: n · n = n².'}
+];
+
+// ---------- ARTIKLER ----------
+const A = [
+  {id:'typer', s:'java', short:'Typer og divisjon', kicker:'DAT100 · Typer', hero:'7 / 2 == 3',
+   title:'Derfor blir 7 / 2 lik 3 i Java',
+   ingress:'Heltallsdivisjon er en av de vanligste feilene på DAT100-eksamen. Her er reglene for tall og typer du må kunne.',
+   topics:['Heltallsdivisjon','Modulo','Typer','Operatorer'],
+   body:[
+    ['p',"Java skiller mellom heltall (`int`, `long`) og desimaltall (`double`). Det er typene i selve regnestykket som bestemmer hvordan det regnes ut, ikke variabelen du lagrer svaret i."],
+    ['h','Heltallsdivisjon'],
+    ['code',"int a = 7 / 2;       // 3\ndouble b = 7 / 2;    // 3.0\ndouble c = 7.0 / 2;  // 3.5"],
+    ['p',"Når begge tallene er int, kutter Java desimalene. I linje to regnes 7 / 2 ut som 3 før svaret gjøres om til 3.0. Er minst ett av tallene en double, blir det vanlig divisjon."],
+    ['h','Modulo gir resten'],
+    ['code',"10 % 3        // 1\n14 % 7        // 0\nn % 2 == 0    // sann når n er et partall\nn % 10        // siste siffer i n"],
+    ['p',"Modulo dukker opp hele tiden på eksamen: til å sjekke partall, hente siste siffer og gå i ring gjennom en tabell."],
+    ['h','Casting'],
+    ['code',"int x = (int) 3.99;          // 3\nint y = (int) -2.7;          // -2\ndouble z = (double) 7 / 2;   // 3.5\nlong r = Math.round(3.99);   // 4"],
+    ['p',"Casting til int kutter desimalene mot null. Det rundes ikke av. Vil du runde av, bruker du `Math.round`."],
+    ['tip',"Se på typene i regnestykket, ikke på variabelen til venstre for likhetstegnet."]
+   ]},
+  {id:'lokker', s:'java', short:'Løkker', kicker:'DAT100 · Løkker', hero:'for (i < n)',
+   title:'for, while eller do-while? Slik velger du riktig løkke',
+   ingress:'Alle tre gjentar kode, men de passer til ulike situasjoner. Og de fleste løkkefeil skyldes én ting: grensene.',
+   topics:['Løkker'],
+   body:[
+    ['h','for: når du vet hvor mange ganger'],
+    ['code',"for (int i = 0; i < 5; i++) {\n    System.out.println(i);   // 0 1 2 3 4\n}"],
+    ['p',"Løkka har tre deler: start (`int i = 0`), betingelse (`i < 5`) og oppdatering (`i++`). Med `<` er 5 ikke med. Med `<=` kjører løkka én gang til."],
+    ['h','while: når du ikke vet når den stopper'],
+    ['code',"int n = 100;\nint steg = 0;\nwhile (n > 1) {\n    n = n / 2;\n    steg++;\n}\n// n: 100, 50, 25, 12, 6, 3, 1  →  steg = 6"],
+    ['p',"Betingelsen sjekkes før hver runde. Er den usann fra starten, kjører løkka null ganger."],
+    ['h','do-while: minst én gang'],
+    ['code',"Scanner sc = new Scanner(System.in);\nint tall;\ndo {\n    System.out.print(\"Skriv et positivt tall: \");\n    tall = sc.nextInt();\n} while (tall <= 0);"],
+    ['p',"Betingelsen sjekkes etter kroppen. Derfor passer do-while til inndata, der du må spørre minst én gang."],
+    ['h','Nøstede løkker'],
+    ['p',"Den indre løkka kjører helt ferdig for hver runde i den ytre. Går den ytre 3 ganger og den indre 4 ganger, kjører kroppen 3 · 4 = 12 ganger."],
+    ['tip',"Lag en tabell med verdien til hver variabel for hver runde. Det kalles sporing, og det er slik du løser «hva skrives ut»-oppgaver uten å gjette."]
+   ]},
+  {id:'strenger', s:'java', short:'Strenger', kicker:'DAT100 · Strenger', hero:'a == b ?',
+   title:'Strenger: Derfor lurer == deg',
+   ingress:'String er et objekt, ikke en primitiv type. Det forklarer nesten alle overraskelsene med tekst i Java.',
+   topics:['Strenger'],
+   body:[
+    ['h','Sammenligning'],
+    ['code',"String a = new String(\"hei\");\nString b = new String(\"hei\");\na == b         // false: to ulike objekter\na.equals(b)    // true: samme tekst"],
+    ['p',"`==` sjekker om to variabler peker på samme objekt. `equals` sjekker innholdet. Sammenlign alltid strenger med equals."],
+    ['h','Pluss leses fra venstre'],
+    ['code',"\"a\" + 1 + 2     // \"a12\"\n1 + 2 + \"a\"     // \"3a\"\n\"a\" + (1 + 2)   // \"a3\""],
+    ['p',"Så lenge begge sider er tall, er + vanlig addisjon. Så snart én side er en streng, blir + sammenslåing."],
+    ['h','Metoder du må kunne'],
+    ['ul',["`s.length()` gir antall tegn.","`s.charAt(i)` gir tegnet på indeks i. Indeksen starter på 0.","`s.substring(1, 3)` gir tegnene på indeks 1 og 2. Sluttindeksen er ikke med.","`s.indexOf(\"a\")` gir første posisjon av \"a\", eller -1 hvis den ikke finnes.","`s.toUpperCase()` gir en ny streng med store bokstaver."]],
+    ['p',"Strenger kan ikke endres. `s.toUpperCase()` endrer ikke s, men returnerer en ny streng. Du må skrive `s = s.toUpperCase();` for å ta vare på den."],
+    ['h','Gå gjennom en streng'],
+    ['code',"int antallA = 0;\nfor (int i = 0; i < s.length(); i++) {\n    if (s.charAt(i) == 'a') {\n        antallA++;\n    }\n}"],
+    ['tip',"charAt gir en char. En char sammenlignes med == og skrives med enkle fnutter: 'a'. En String skrives med doble: \"a\"."]
+   ]},
+  {id:'tabeller', s:'java', short:'Tabeller og ArrayList', kicker:'DAT100 · Tabeller', hero:'t[t.length - 1]',
+   title:'Tabell eller ArrayList? Dette må du vite',
+   ingress:'En tabell har fast størrelse. En ArrayList vokser når du trenger det. Begge kommer på eksamen.',
+   topics:['Tabeller','ArrayList'],
+   body:[
+    ['h','Tabeller'],
+    ['code',"int[] tall = new int[5];   // {0, 0, 0, 0, 0}\nint[] t = {3, 1, 4};\nt.length                   // 3 (ingen parenteser)\nt[t.length - 1]            // 4, siste element"],
+    ['p',"Indeksene går fra 0 til length − 1. `t[3]` gir ArrayIndexOutOfBoundsException når programmet kjører. Nye tabeller fylles med 0, false eller null, avhengig av typen."],
+    ['h','Finn største verdi'],
+    ['code',"int maks = t[0];\nfor (int i = 1; i < t.length; i++) {\n    if (t[i] > maks) {\n        maks = t[i];\n    }\n}"],
+    ['p',"Start med første element, ikke med 0. Ellers blir svaret feil hvis alle tallene er negative."],
+    ['h','ArrayList'],
+    ['code',"import java.util.ArrayList;\n\nArrayList<Integer> liste = new ArrayList<>();\nliste.add(4);       // [4]\nliste.add(7);       // [4, 7]\nliste.get(1);       // 7\nliste.size();       // 2 (ikke length)\nliste.remove(0);    // [7]"],
+    ['p',"En ArrayList kan bare inneholde objekter. Derfor skriver du Integer og ikke int, og Double og ikke double."],
+    ['table',[["","Tabell","ArrayList"],["Størrelse","Fast","Vokser"],["Lengde","`t.length`","`l.size()`"],["Hente","`t[i]`","`l.get(i)`"],["Endre","`t[i] = x`","`l.set(i, x)`"]]],
+    ['h','for-each'],
+    ['code',"int sum = 0;\nfor (int x : t) {\n    sum += x;\n}"],
+    ['tip',"for-each er enklest når du bare skal lese alle elementene. Trenger du indeksen, eller skal du endre tabellen, bruker du vanlig for-løkke."]
+   ]},
+  {id:'klasser', s:'java', short:'Klasser og objekter', kicker:'DAT100 · Objekter', hero:'new Konto()',
+   title:'Klasser og objekter: Slik henger det sammen',
+   ingress:'En klasse er en oppskrift, og et objekt er kaken du lager etter den. Her er alt du trenger om objektorientering på DAT100.',
+   topics:['Klasser','Arv','Metoder'],
+   body:[
+    ['code',"public class Konto {\n    private String eier;\n    private double saldo;\n\n    public Konto(String eier) {\n        this.eier = eier;\n        this.saldo = 0;\n    }\n\n    public void settInn(double belop) {\n        if (belop > 0) {\n            saldo += belop;\n        }\n    }\n\n    public double getSaldo() {\n        return saldo;\n    }\n}"],
+    ['h','Delene i klassen'],
+    ['ul',["Feltene `eier` og `saldo` er dataene hvert objekt husker.","`private` betyr at bare klassen selv kan endre feltene.","Konstruktøren heter det samme som klassen og har ingen returtype. Den kjører når du skriver `new`.","`this.eier` er feltet, mens `eier` er parameteren.","Get-metoder gir lesetilgang uten at andre kan endre feltet direkte."]],
+    ['h','Bruk av klassen'],
+    ['code',"Konto k = new Konto(\"Ola\");\nk.settInn(500);\nSystem.out.println(k.getSaldo());   // 500.0"],
+    ['h','static'],
+    ['p',"En static-metode tilhører klassen og ikke et objekt, for eksempel `Math.max(3, 8)`. Den kan ikke bruke `this` eller felt som ikke er static."],
+    ['h','Arv'],
+    ['code',"public class Sparekonto extends Konto {\n    private double rente;\n\n    public Sparekonto(String eier, double rente) {\n        super(eier);\n        this.rente = rente;\n    }\n}"],
+    ['p',"Sparekonto arver alle metodene til Konto. `super(eier)` kaller konstruktøren i Konto, og den må stå først i konstruktøren."],
+    ['tip',"Start alltid med feltene når du skal lage en klasse. Spør deg selv: Hva må hvert objekt huske?"]
+   ]},
+  {id:'implikasjon', s:'math', short:'Implikasjon', kicker:'MAT101 · Logikk', hero:'p → q',
+   title:'Implikasjon: Løftet som bare kan brytes på én måte',
+   ingress:'p → q er den delen av logikken flest sliter med. Når du forstår én enkel tabell, faller resten på plass.',
+   topics:['Logikk'],
+   body:[
+    ['p',"Tenk på løftet «Hvis det regner (p), tar jeg paraply (q)»."],
+    ['table',[["p","q","p → q"],["S","S","S"],["S","U","U"],["U","S","S"],["U","U","S"]]],
+    ['p',"Løftet brytes bare når det regner og jeg ikke har paraply. Regner det ikke, har jeg ikke brutt noe, uansett hva jeg gjør. Da sier vi at implikasjonen er tomt sann."],
+    ['h','Tre former du må kunne'],
+    ['ul',["p → q er ekvivalent med ¬p ∨ q.","Kontrapositiven ¬q → ¬p er ekvivalent med p → q.","Den omvendte, q → p, er ikke ekvivalent. At jeg har paraply, betyr ikke at det regner."]],
+    ['h','Fellen med ∃ og →'],
+    ['p',"∃x(P(x) → Q(x)) er nesten alltid sann. Det holder med én x der P(x) er usann. Vil du si at noen P-er er Q, skriver du ∃x(P(x) ∧ Q(x))."],
+    ['p',"Med ∀ er det motsatt. «Alle P er Q» skrives ∀x(P(x) → Q(x)), ikke med ∧."],
+    ['tip',"∀ går sammen med →, og ∃ går sammen med ∧."]
+   ]},
+  {id:'kvantorer', s:'math', short:'Negasjon og kvantorer', kicker:'MAT101 · Predikatlogikk', hero:'¬∀x ≡ ∃x¬',
+   title:'Slik negerer du ∀ og ∃',
+   ingress:'På eksamen må du kunne skrive om negasjoner. Reglene er få, og de følger samme mønster som De Morgan.',
+   topics:['Logikk','Predikatlogikk'],
+   body:[
+    ['h','De Morgans lover'],
+    ['ul',["¬(p ∧ q) ≡ ¬p ∨ ¬q","¬(p ∨ q) ≡ ¬p ∧ ¬q"]],
+    ['p',"Negasjonen flyttes inn, og ∧ og ∨ bytter plass."],
+    ['h','Kvantorer'],
+    ['ul',["¬∀x P(x) ≡ ∃x ¬P(x): «ikke alle» betyr «minst én ikke».","¬∃x P(x) ≡ ∀x ¬P(x): «ingen» betyr «alle ikke»."]],
+    ['p',"Samme mønster: Negasjonen flyttes inn, og kvantoren bytter."],
+    ['h','Eksempel steg for steg'],
+    ['p',"Vi skal negere «Alle studenter liker kaffe», som skrives ∀x(S(x) → K(x))."],
+    ['code',"¬∀x(S(x) → K(x))\n≡ ∃x ¬(S(x) → K(x))     kvantoren bytter\n≡ ∃x ¬(¬S(x) ∨ K(x))    p → q ≡ ¬p ∨ q\n≡ ∃x (S(x) ∧ ¬K(x))     De Morgan og dobbel negasjon"],
+    ['p',"Svaret leses «Det finnes en student som ikke liker kaffe». Det er nøyaktig det motsatte av den opprinnelige påstanden."],
+    ['tip',"Les svaret som en vanlig norsk setning. Høres det ut som det motsatte av utgangspunktet, har du sannsynligvis gjort det riktig."]
+   ]},
+  {id:'mengder', s:'math', short:'Mengdelære', kicker:'MAT101 · Mengder', hero:'A ∪ B',
+   title:'Mengdelære på fem minutter',
+   ingress:'Union, snitt, differanse og potensmengde. Her er symbolene og regnereglene samlet på ett sted.',
+   topics:['Mengder'],
+   body:[
+    ['table',[["Symbol","Navn","Betyr"],["A ∪ B","Union","i A eller i B"],["A ∩ B","Snitt","i både A og B"],["A − B","Differanse","i A, men ikke i B"],["A × B","Kartesisk produkt","alle par (a, b)"],["P(A)","Potensmengde","alle delmengder av A"]]],
+    ['h','Eksempel'],
+    ['code',"A = {1, 2, 3}    B = {2, 3, 4}\n\nA ∪ B   = {1, 2, 3, 4}\nA ∩ B   = {2, 3}\nA − B   = {1}\n|A × B| = 3 · 4 = 12"],
+    ['h','Inklusjon–eksklusjon'],
+    ['p',"Når du legger sammen |A| og |B|, telles elementene i snittet to ganger. Derfor trekker du snittet fra én gang: |A ∪ B| = |A| + |B| − |A ∩ B|."],
+    ['h','Potensmengden'],
+    ['p',"En mengde med n elementer har 2ⁿ delmengder, fordi hvert element enten er med eller ikke. Både ∅ og A selv regnes med. For {a, b} er P = {∅, {a}, {b}, {a, b}}."],
+    ['tip',"Det kartesiske produktet er det samme som Haskell-uttrykket [(x, y) | x <- A, y <- B]."]
+   ]},
+  {id:'telling', s:'math', short:'Kombinatorikk', kicker:'MAT101 · Kombinatorikk', hero:'C(6, 3) = 20',
+   title:'Permutasjon eller kombinasjon? Slik vet du det',
+   ingress:'Still deg selv ett spørsmål før du regner: Spiller rekkefølgen noen rolle?',
+   topics:['Kombinatorikk'],
+   body:[
+    ['table',[["Situasjon","Formel","Eksempel"],["Rekkefølge betyr noe, alle n","n!","4 personer i kø: 24"],["Rekkefølge betyr noe, r av n","n! / (n − r)!","Gull, sølv og bronse blant 8: 336"],["Rekkefølge betyr ikke noe","C(n, r) = n! / (r! (n − r)!)","3 av 6 i en gruppe: 20"]]],
+    ['h','Produktregelen'],
+    ['p',"Har du 3 bukser og 4 gensere, har du 3 · 4 = 12 antrekk. En PIN-kode med 4 siffer har 10⁴ = 10 000 muligheter."],
+    ['h','Dueslagsprinsippet'],
+    ['p',"Legger du n + 1 duer i n slag, må minst ett slag få to duer. Derfor har minst to av 13 personer bursdag i samme måned."],
+    ['tip',"Forkort før du ganger ut: C(6, 3) = (6 · 5 · 4) / (3 · 2 · 1) = 20. Da slipper du store tall."]
+   ]},
+  {id:'induksjon', s:'math', short:'Induksjon', kicker:'MAT101 · Bevis', hero:'P(k) → P(k+1)',
+   title:'Induksjonsbevis: Oppskriften som alltid virker',
+   ingress:'Induksjon fungerer som dominobrikker. Velter den første, og hver brikke velter den neste, så faller alle.',
+   topics:['Induksjon','Summer','Rekursjon'],
+   body:[
+    ['h','Oppskriften'],
+    ['ol',["Basissteg: Vis at P(1) er sann.","Induksjonshypotese: Anta at P(k) er sann for en vilkårlig k ≥ 1.","Induksjonstrinn: Bruk hypotesen til å vise at P(k + 1) er sann.","Konklusjon: P(n) er sann for alle n ≥ 1."]],
+    ['h','Eksempel'],
+    ['p',"Vi skal vise at 1 + 2 + … + n = n(n + 1)/2."],
+    ['code',"Basis (n = 1):\n  venstre side = 1,  høyre side = 1 · 2 / 2 = 1   ✓\n\nAnta:\n  1 + 2 + … + k = k(k + 1)/2\n\nVis for k + 1:\n  1 + 2 + … + k + (k + 1)\n  = k(k + 1)/2 + (k + 1)      bruker antagelsen\n  = (k + 1)(k/2 + 1)\n  = (k + 1)(k + 2)/2          formelen for n = k + 1   ✓"],
+    ['p',"Det viktigste steget er der du bytter ut summen med antagelsen. Skriv tydelig at du bruker induksjonshypotesen, for det er det sensor ser etter."],
+    ['tip',"Skriv ned hva P(k + 1) skal bli før du begynner å regne. Da vet du hvor du skal ende."]
+   ]}
+];
+
+// ---------- SE KODEN KJØRE ----------
+function traceSum() {
+  const s = [{ l: 0, v: { sum: 0 }, n: 'sum starter på 0.' }];
+  let sum = 0;
+  for (let i = 0; i < 4; i++) {
+    s.push({ l: 1, v: { sum, i }, n: 'i = ' + i + '. Er ' + i + ' < 4? Ja, inn i løkka.' });
+    sum += i;
+    s.push({ l: 2, v: { sum, i }, n: 'sum += ' + i + ' gir sum = ' + sum + '.' });
+  }
+  s.push({ l: 1, v: { sum, i: 4 }, n: 'i = 4. Er 4 < 4? Nei, løkka er ferdig.' });
+  s.push({ l: 4, v: { sum }, o: String(sum), n: 'Skriver ut ' + sum + '.' });
+  return s;
+}
+function traceHalve() {
+  let n = 20, steg = 0;
+  const s = [{ l: 0, v: { n }, n: 'n starter på 20.' }, { l: 1, v: { n, steg }, n: 'steg starter på 0.' }];
+  while (n > 1) {
+    s.push({ l: 2, v: { n, steg }, n: 'Er ' + n + ' > 1? Ja.' });
+    n = Math.floor(n / 2);
+    s.push({ l: 3, v: { n, steg }, n: 'n = n / 2 gir ' + n + ' (heltallsdivisjon kutter desimalene).' });
+    steg++;
+    s.push({ l: 4, v: { n, steg }, n: 'steg++ gir steg = ' + steg + '.' });
+  }
+  s.push({ l: 2, v: { n, steg }, n: 'Er 1 > 1? Nei, løkka er ferdig.' });
+  s.push({ l: 6, v: { n, steg }, o: String(steg), n: 'Skriver ut ' + steg + '.' });
+  return s;
+}
+function traceRev() {
+  const str = 'kode'; let r = '';
+  const q = x => '"' + x + '"';
+  const s = [{ l: 0, v: { s: q(str) }, n: 's er "kode".' }, { l: 1, v: { s: q(str), r: q(r) }, n: 'r starter som en tom streng.' }];
+  for (let i = str.length - 1; i >= 0; i--) {
+    s.push({ l: 2, v: { r: q(r), i }, n: 'i = ' + i + '. Er ' + i + ' >= 0? Ja.' });
+    r += str[i];
+    s.push({ l: 3, v: { r: q(r), i }, n: "s.charAt(" + i + ") er '" + str[i] + "', så r blir " + q(r) + '.' });
+  }
+  s.push({ l: 2, v: { r: q(r), i: -1 }, n: 'i = -1. Er -1 >= 0? Nei, løkka er ferdig.' });
+  s.push({ l: 5, v: { r: q(r) }, o: r, n: 'Skriver ut ' + r + '.' });
+  return s;
+}
+function traceMax() {
+  const t = [3, 8, 2, 9]; let maks = t[0];
+  const s = [{ l: 0, v: { t: '{3, 8, 2, 9}' }, n: 'Tabellen har 4 tall.' }, { l: 1, v: { maks }, n: 'maks starter som t[0], altså 3.' }];
+  for (let i = 1; i < t.length; i++) {
+    s.push({ l: 2, v: { maks, i }, n: 'i = ' + i + '. Er ' + i + ' < 4? Ja.' });
+    const big = t[i] > maks;
+    s.push({ l: 3, v: { maks, i, 't[i]': t[i] }, n: 'Er t[' + i + '] = ' + t[i] + ' større enn ' + maks + '? ' + (big ? 'Ja.' : 'Nei, hopp over.') });
+    if (big) { maks = t[i]; s.push({ l: 4, v: { maks, i, 't[i]': t[i] }, n: 'maks blir ' + maks + '.' }); }
+  }
+  s.push({ l: 2, v: { maks, i: 4 }, n: 'i = 4. Er 4 < 4? Nei, løkka er ferdig.' });
+  s.push({ l: 7, v: { maks }, o: String(maks), n: 'Skriver ut ' + maks + '.' });
+  return s;
+}
+
+const T = [
+  { id: 't-sum', s: 'java', t: 'Løkker', title: 'Se en for-løkke summere',
+    code: ['int sum = 0;', 'for (int i = 0; i < 4; i++) {', '    sum += i;', '}', 'System.out.println(sum);'], steps: traceSum() },
+  { id: 't-halv', s: 'java', t: 'Løkker', title: 'Se en while-løkke halvere et tall',
+    code: ['int n = 20;', 'int steg = 0;', 'while (n > 1) {', '    n = n / 2;', '    steg++;', '}', 'System.out.println(steg);'], steps: traceHalve() },
+  { id: 't-rev', s: 'java', t: 'Strenger', title: 'Se en streng bli snudd baklengs',
+    code: ['String s = "kode";', 'String r = "";', 'for (int i = s.length() - 1; i >= 0; i--) {', '    r += s.charAt(i);', '}', 'System.out.println(r);'], steps: traceRev() },
+  { id: 't-maks', s: 'java', t: 'Tabeller', title: 'Se jakten på det største tallet',
+    code: ['int[] t = {3, 8, 2, 9};', 'int maks = t[0];', 'for (int i = 1; i < t.length; i++) {', '    if (t[i] > maks) {', '        maks = t[i];', '    }', '}', 'System.out.println(maks);'], steps: traceMax() },
+  { id: 't-impl', s: 'math', t: 'Logikk', title: 'Se p → q bli regnet ut',
+    table: { head: ['p', 'q', 'p → q'], rows: [['S', 'S', 'S'], ['S', 'U', 'U'], ['U', 'S', 'S'], ['U', 'U', 'S']], hide: [2] },
+    steps: [
+      { r: 0, n: 'Det regner, og jeg har paraply. Løftet holdt: sann.' },
+      { r: 1, n: 'Det regner, men jeg har ikke paraply. Løftet er brutt: usann.' },
+      { r: 2, n: 'Det regner ikke. Da er løftet ikke brutt, uansett: sann.' },
+      { r: 3, n: 'Det regner ikke, og ingen paraply. Ikke brutt: sann.' },
+      { r: 3, hl: [2], n: 'Bare én rad er usann: når p er sann og q er usann.' }
+    ] },
+  { id: 't-dm', s: 'math', t: 'Logikk', title: 'Se De Morgan bli bevist med tabell',
+    table: { head: ['p', 'q', 'p ∧ q', '¬(p ∧ q)', '¬p', '¬q', '¬p ∨ ¬q'],
+      rows: [['S', 'S', 'S', 'U', 'U', 'U', 'U'], ['S', 'U', 'U', 'S', 'U', 'S', 'S'], ['U', 'S', 'U', 'S', 'S', 'U', 'S'], ['U', 'U', 'U', 'S', 'S', 'S', 'S']], hide: [2, 3, 4, 5, 6] },
+    steps: [
+      { r: 0, n: 'Begge sanne: p ∧ q er S, så ¬(p ∧ q) er U. ¬p og ¬q er U, så ¬p ∨ ¬q er U.' },
+      { r: 1, n: 'q er usann: p ∧ q blir U, så ¬(p ∧ q) er S. ¬q er S, så ¬p ∨ ¬q er S.' },
+      { r: 2, n: 'p er usann: samme resultat, begge sider blir S.' },
+      { r: 3, n: 'Begge usanne: begge sider blir S.' },
+      { r: 3, hl: [3, 6], n: 'Kolonnene ¬(p ∧ q) og ¬p ∨ ¬q er like i alle rader. Uttrykkene er ekvivalente.' }
+    ] }
+];
+
+// ---------- FINN FEILEN ----------
+const B = [
+  { id: 'b-lengde', s: 'java', t: 'Tabeller', q: 'Programmet krasjer. Trykk på linja med feilen.',
+    lines: ['int[] t = {4, 2, 7};', 'int sum = 0;', 'for (int i = 0; i <= t.length; i++) {', '    sum += t[i];', '}', 'System.out.println(sum);'], bug: 2,
+    why: 'Med `<=` blir i til slutt 3, og t[3] finnes ikke. Det gir ArrayIndexOutOfBoundsException.', fix: 'for (int i = 0; i < t.length; i++) {' },
+  { id: 'b-equals', s: 'java', t: 'Strenger', q: 'Det skrives aldri «Like!», selv om du skriver hei. Hvor er feilen?',
+    lines: ['Scanner sc = new Scanner(System.in);', 'String a = "hei";', 'String b = sc.nextLine();', 'if (a == b) {', '    System.out.println("Like!");', '}'], bug: 3,
+    why: '`==` sjekker om det er samme objekt. Strenger sammenlignes med equals.', fix: 'if (a.equals(b)) {' },
+  { id: 'b-konstr', s: 'java', t: 'Klasser', q: 'new Hund("Fido") gir kompileringsfeil. Hvor er feilen?',
+    lines: ['public class Hund {', '    private String navn;', '', '    public void Hund(String navn) {', '        this.navn = navn;', '    }', '}'], bug: 3,
+    why: 'En konstruktør har ingen returtype. Med void blir det en vanlig metode, og klassen mangler konstruktøren som tar en String.', fix: '    public Hund(String navn) {' },
+  { id: 'b-evig', s: 'java', t: 'Løkker', q: 'Løkka stopper aldri. Hvor er feilen?',
+    lines: ['int teller = 0;', 'while (teller < 5) {', '    System.out.println(teller);', '    teller--;', '}'], bug: 3,
+    why: 'teller går nedover: 0, -1, -2 … og blir aldri 5 eller mer. Det blir en evig løkke.', fix: '    teller++;' },
+  { id: 'b-snitt', s: 'java', t: 'Heltallsdivisjon', q: 'Programmet skriver 3.0, men skulle skrevet 3.5. Hvor er feilen?',
+    lines: ['int sum = 7;', 'int antall = 2;', 'double snitt = sum / antall;', 'System.out.println(snitt);'], bug: 2,
+    why: 'sum og antall er begge int, så 7 / 2 blir 3 før det gjøres om til 3.0.', fix: 'double snitt = (double) sum / antall;' },
+  { id: 'b-maks', s: 'java', t: 'Metoder', q: 'maks(2, 9) gir 2. Hvor er feilen?',
+    lines: ['public static int maks(int a, int b) {', '    if (a > b) {', '        return a;', '    }', '    return a;', '}'], bug: 4,
+    why: 'Når a ikke er størst, skal metoden returnere b.', fix: '    return b;' },
+  { id: 'b-upper', s: 'java', t: 'Strenger', q: 'Programmet skriver ola, men skulle skrevet OLA. Hvor er feilen?',
+    lines: ['String navn = "ola";', 'navn.toUpperCase();', 'System.out.println(navn);'], bug: 1,
+    why: 'Strenger kan ikke endres. toUpperCase lager en ny streng, og den må lagres.', fix: 'navn = navn.toUpperCase();' }
+];
+
+// ---------- VIDEOER ----------
+const V = [
+  { id: 'v-lokker', s: 'java', t: 'Løkker', title: 'Løkker i Java', who: 'Programming with Mosh', q: 'programming with mosh java for loop' },
+  { id: 'v-tabeller', s: 'java', t: 'Tabeller', title: 'Tabeller (arrays) i Java', who: 'Bro Code', q: 'bro code java arrays' },
+  { id: 'v-klasser', s: 'java', t: 'Klasser', title: 'Klasser og objekter', who: 'Programming with Mosh', q: 'programming with mosh java classes and objects' },
+  { id: 'v-strenger', s: 'java', t: 'Strenger', title: 'equals eller ==?', who: 'Java-forklaring', q: 'java string equals vs == explained' },
+  { id: 'v-impl', s: 'math', t: 'Logikk', title: 'Implikasjon og sannhetstabeller', who: 'TrevTutor', q: 'trevtutor conditional statements discrete math' },
+  { id: 'v-kvant', s: 'math', t: 'Predikatlogikk', title: 'Negasjon av kvantorer', who: 'Diskret matte', q: 'negating quantifiers discrete math' },
+  { id: 'v-induk', s: 'math', t: 'Induksjon', title: 'Induksjonsbevis steg for steg', who: 'Diskret matte', q: 'proof by induction discrete math sum' },
+  { id: 'v-komb', s: 'math', t: 'Kombinatorikk', title: 'Permutasjon og kombinasjon', who: 'Kombinatorikk', q: 'permutations vs combinations explained' }
+];
+
+// ---------- SWIPE-KORT ----------
+const F = [
+  { id: 'f1', s: 'java', f: 'Hva gjør `break`?', b: 'Avslutter løkka eller switch-en med en gang.' },
+  { id: 'f2', s: 'java', f: 'Hva gjør `continue`?', b: 'Hopper over resten av denne runden og går rett til neste.' },
+  { id: 'f3', s: 'java', f: 'Forskjellen på `int` og `Integer`?', b: 'int er en primitiv type. Integer er et objekt, og trengs i ArrayList.' },
+  { id: 'f4', s: 'java', f: 'Lengden til en tabell, en streng og en ArrayList?', b: '`t.length`, `s.length()` og `l.size()`.' },
+  { id: 'f5', s: 'java', f: 'Hva er en konstruktør?', b: 'Har samme navn som klassen og ingen returtype. Kjører når du skriver new.' },
+  { id: 'f6', s: 'java', f: 'Hva betyr `private`?', b: 'Bare synlig inne i klassen selv.' },
+  { id: 'f7', s: 'java', f: 'Hva betyr `static`?', b: 'Tilhører klassen, ikke et objekt. Kalles som `Math.max(3, 8)`.' },
+  { id: 'f8', s: 'java', f: 'Hva er overloading?', b: 'Samme metodenavn, men ulike parametere.' },
+  { id: 'f9', s: 'java', f: 'Hva gjør `super(...)` i en konstruktør?', b: 'Kaller konstruktøren i superklassen. Må stå først.' },
+  { id: 'f10', s: 'java', f: '`7 / 2` i Java?', b: '3. Heltallsdivisjon kutter desimalene.' },
+  { id: 'f11', s: 'java', f: 'Hvordan sammenligner du to strenger?', b: 'Med `a.equals(b)`, ikke med `==`.' },
+  { id: 'f12', s: 'java', f: 'Siste indeks i en tabell t?', b: '`t.length - 1`' },
+  { id: 'f13', s: 'math', f: 'p → q er usann når …', b: 'p er sann og q er usann. Bare da.' },
+  { id: 'f14', s: 'math', f: 'p → q er ekvivalent med …', b: '¬p ∨ q, og kontrapositiven ¬q → ¬p.' },
+  { id: 'f15', s: 'math', f: 'De Morgan: ¬(p ∧ q) ≡ ?', b: '¬p ∨ ¬q' },
+  { id: 'f16', s: 'math', f: '¬∀x P(x) ≡ ?', b: '∃x ¬P(x). «Ikke alle» betyr «minst én ikke».' },
+  { id: 'f17', s: 'math', f: '|A ∪ B| = ?', b: '|A| + |B| − |A ∩ B|' },
+  { id: 'f18', s: 'math', f: 'Antall delmengder av en mengde med n elementer?', b: '2ⁿ' },
+  { id: 'f19', s: 'math', f: 'C(n, r) = ?', b: 'n! / (r! (n − r)!). Rekkefølgen spiller ingen rolle.' },
+  { id: 'f20', s: 'math', f: 'Injektiv betyr …', b: 'Ulike input gir alltid ulik output.' },
+  { id: 'f21', s: 'math', f: 'Surjektiv betyr …', b: 'Alle verdier i kodomenet blir truffet.' },
+  { id: 'f22', s: 'math', f: 'En ekvivalensrelasjon er …', b: 'Refleksiv, symmetrisk og transitiv.' },
+  { id: 'f23', s: 'math', f: 'De to stegene i induksjon?', b: 'Basissteg: vis P(1). Induksjonstrinn: vis P(k) → P(k + 1).' },
+  { id: 'f24', s: 'math', f: '1 + 2 + … + n = ?', b: 'n(n + 1) / 2' }
+];
+
+// ---------- INNHOLD FRA OBLIGER, PROSJEKT OG LABER ----------
+Q.push(
+  // DAT100 · Lab 3 (tidligere eksamensoppgaver)
+  {s:'java',t:'Operatorer',src:'Lab 3 · eksamen',q:'Hva skrives ut?',c:'int i = 5;\nint j = 10;\nSystem.out.println(i * j + i);',o:['55','75','100','510'],a:0,w:'Ganging går før pluss: 5 · 10 = 50, og 50 + 5 = 55.'},
+  {s:'java',t:'Logikk',src:'Lab 3 · eksamen',q:'Hva skrives ut?',c:'int i = 5;\nboolean b = true;\nSystem.out.println(b && i > 5);',o:['true','false'],a:1,w:'5 > 5 er usann. Med `&&` må begge sider være sanne, så svaret er false.'},
+  {s:'java',t:'Strenger',src:'Lab 3 · eksamen',q:'Hva skrives ut?',c:'String s = "dat100";\nSystem.out.println(s.substring(3, 5));',o:['10','100','t1','t10'],a:0,w:'Indeks 3 er 1 og indeks 4 er 0. Sluttindeksen 5 er ikke med, så svaret er "10".'},
+  {s:'java',t:'Operatorer',src:'Lab 3 · eksamen',q:'Hva skrives ut?',c:'System.out.println(5 + 3 * 2);',o:['16','11','13','10'],a:1,w:'3 · 2 = 6 regnes først, og 5 + 6 = 11.'},
+  {s:'java',t:'Operatorer',src:'Lab 3 · eksamen',q:'Hva skrives ut?',c:'System.out.println(9 % 5);\nSystem.out.println(9 / 5);',o:['4 og 1','1 og 4','4 og 1.8','1.8 og 4'],a:0,w:'9 % 5 er resten, altså 4. 9 / 5 er heltallsdivisjon, altså 1.'},
+  {s:'java',t:'Løkker',src:'Lab 3',q:'Hva skrives ut?',c:'for (int j = 1; j < 8; j = j * 2) {\n    System.out.print(j + " ");\n}',o:['1 2 4','1 2 4 8','1 2 3 4 5 6 7','2 4 8'],a:0,w:'j dobles hver runde: 1, 2, 4. Neste verdi er 8, og 8 < 8 er usann.'},
+  {s:'java',t:'Løkker',src:'Lab 3',q:'Hvor mange ganger kjører løkka?',c:'int i = 1;\nwhile (i < 1) {\n    System.out.println("Nr 1, i = " + i);\n}',o:['0','1','Uendelig mange','Kompileringsfeil'],a:0,w:'1 < 1 er usann allerede før første runde, så kroppen kjører aldri.'},
+  {s:'java',t:'Strenger',src:'Lab 3',q:'Hva skrives ut?',c:'String s = "Test";\nfor (int k = s.length() - 1; k > 0; k--) {\n    System.out.print(s.charAt(k));\n}',o:['tseT','tse','Tes','est'],a:1,w:'k går 3, 2, 1. Indeks 0 (T) er ikke med, fordi betingelsen er k > 0.'},
+  {s:'java',t:'Løkker',src:'Lab 3',q:'tall = 7569. Hva er aS etter løkka, og hva regner den ut?',c:'int hjelp = tall;\nint aS = 0;\ndo {\n    hjelp = hjelp / 10;\n    aS = aS + 1;\n} while (hjelp > 0);',o:['4, antall siffer','7569, tallet selv','27, tverrsummen','3, antall delinger'],a:0,w:'Hver deling på 10 fjerner ett siffer: 756, 75, 7, 0. Det blir fire runder, altså fire siffer.'},
+  {s:'java',t:'Løkker',src:'Lab 3 · eksamen',q:'Hva returnerer b(28, 12)?',c:'public static int b(int x, int y) {\n    while (x != y) {\n        if (x > y) x = x - y;\n        else y = y - x;\n    }\n    return x;\n}',o:['4','2','12','16'],a:0,w:'(28, 12) → (16, 12) → (4, 12) → (4, 8) → (4, 4). Dette er Euklids algoritme, og 4 er største felles divisor.'},
+  // DAT100 · Innlevering 2
+  {s:'java',t:'Tabeller',src:'Innlevering 2',q:'Hva skal tilStreng({42, 67, 89}) returnere?',o:['"[42,67,89]"','"[42, 67, 89]"','"42,67,89"','"[42,67,89,]"'],a:0,w:'Komma kommer bare mellom tallene. Derfor sjekker løsningen `if (i < tabell.length - 1)` før den legger til komma.'},
+  {s:'java',t:'Tabeller',src:'Innlevering 2',q:'Hva returnerer posisjonTall({4, 7, 7}, 7)?',o:['1','2','-1','true'],a:0,w:'Metoden returnerer den første posisjonen der tallet finnes. 7 står først på indeks 1.'},
+  {s:'java',t:'Tabeller',src:'Innlevering 2',q:'erSortert sjekker at hvert tall er større enn det forrige. Hva gir erSortert({1, 3, 3, 5})?',o:['true','false'],a:1,w:'3 er ikke større enn 3. To like tall etter hverandre gjør at tabellen ikke er stigende.'},
+  {s:'java',t:'Tabeller',src:'Innlevering 2',q:'Hvorfor går løkka i erSortert bare til i < tabell.length - 1?',o:['Fordi den sammenligner tabell[i] med tabell[i + 1]','For å hoppe over det første elementet','Fordi det siste elementet alltid er størst','Det er en feil'],a:0,w:'Når i er siste indeks, finnes ikke tabell[i + 1]. Derfor stopper løkka ett steg før.'},
+  {s:'java',t:'Tabeller',src:'Innlevering 2',q:'I settSammen kopieres tabell2 inn etter tabell1. Hvilken indeks i den nye tabellen får tabell2[j]?',o:['j','tabell1.length + j','tabell2.length + j','j + 1'],a:1,w:'De første tabell1.length plassene er brukt. tabell2 starter rett etter.'},
+  {s:'java',t:'Matriser',src:'Innlevering 2',q:'Hva er m.length og m[0].length?',c:'int[][] m = {\n    {1, 2, 3},\n    {4, 5, 6}\n};',o:['2 og 3','3 og 2','6 og 3','2 og 6'],a:0,w:'m.length er antall rader (2). m[0].length er antall kolonner i rad 0 (3).'},
+  {s:'java',t:'Matriser',src:'Innlevering 2',q:'Hva er m[1][2]?',c:'int[][] m = {\n    {1, 2, 3},\n    {4, 5, 6}\n};',o:['6','5','2','3'],a:0,w:'Først raden, så kolonnen. Rad 1 er {4, 5, 6}, og kolonne 2 i den er 6.'},
+  {s:'java',t:'Matriser',src:'Lab 6',q:'Hva er obs[1].length?',c:'double[][] obs = {\n    {1.4, 1.7, 1.9, 2.0},\n    {5.4, 7.8, 9.8, 7.9, 3.0},\n    {-1.7, -1.7, -2.8}\n};',o:['3','4','5','12'],a:2,w:'Hver rad er en egen tabell og kan ha sin egen lengde. Rad 1 har 5 tall.'},
+  {s:'java',t:'Matriser',src:'Innlevering 2',q:'A er en 2×3-matrise og B er en 3×4-matrise. Hvilken størrelse får A · B?',o:['2×4','3×3','2×3','De kan ikke ganges'],a:0,w:'Det er lov fordi A har 3 kolonner og B har 3 rader. Svaret får radene til A og kolonnene til B.'},
+  {s:'java',t:'Matriser',src:'Innlevering 2',q:'Testen inneholder assertFalse(skaler == a). Hva sjekker den?',o:['At skaler lager en ny matrise og ikke returnerer den samme','At matrisene har ulikt innhold','At skaler ikke returnerer null','At a ikke er tom'],a:0,w:'`==` sammenligner pekere. Testen krever at du lager en ny matrise med `new`.'},
+  {s:'java',t:'Testing',src:'Innlevering 2',q:'Hvilken rekkefølge har argumentene i assertEquals?',o:['Forventet verdi først, så det metoden ga','Det metoden ga først, så forventet verdi','Rekkefølgen spiller ingen rolle','Begge må være strenger'],a:0,w:'For eksempel `assertEquals("[42,67,89]", Tabeller.tilStreng(t))`. Feilmeldingen blir lettere å lese når rekkefølgen er riktig.'},
+  {s:'java',t:'Tabeller',src:'Lab 10',q:'Hva skrives ut?',c:'int[] tab = {1, 2, 3};\nfor (int x : tab) {\n    x = x + 1;\n}\nSystem.out.println(tab[0]);',o:['1','2','0','Kompileringsfeil'],a:0,w:'I en utvidet for-løkke er x en kopi av elementet. Tabellen endres ikke. Bruk `tab[i] = tab[i] + 1` i en vanlig for-løkke.'},
+  // DAT100 · JavEl-prosjektet
+  {s:'java',t:'JavEl',src:'JavEl',q:'Hva gjør %.2f i System.out.printf("%.2f NOK ", pris)?',o:['Skriver pris med to desimaler','Skriver pris som heltall','Ganger pris med 2','Skriver 2 og så pris'],a:0,w:'På en norsk PC kan det komme komma i stedet for punktum, fordi printf følger språkinnstillingen.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Strømstøtten dekker 90 % av prisen over 0,9375 kr/kWh. Prisen er 1,4375 kr/kWh, og du bruker 2 kWh. Hvor mye får du i støtte den timen?',o:['0,90 kr','0,45 kr','1,00 kr','2,59 kr'],a:0,w:'Delen over grensen er 1,4375 − 0,9375 = 0,5 kr. Støtten blir 2 · 0,5 · 0,90 = 0,90 kr.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Samme regel, men prisen er 0,80 kr/kWh. Hvor mye blir støtten?',o:['0 kr','0,12 kr','0,72 kr','Et negativt beløp'],a:0,w:'Prisen er under grensen, så getSupport returnerer 0.0.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Med Norgespris betaler du 50 øre per kWh. Hva koster 10 kWh?',o:['5 kr','10 kr','0,50 kr','50 kr'],a:0,w:'10 · 0,50 = 5 kr. Spotprisen spiller ingen rolle for Norgespris.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Hvorfor skal exceedThreshold bruke en while-løkke?',o:['For å stoppe så snart forbruket er over grensen','Fordi for-løkker ikke virker på 2D-tabeller','Fordi while er raskere i Java','Fordi metoden returnerer void'],a:0,w:'Med while kan betingelsen være «flere dager igjen og fortsatt under grensen». Da slipper du å gå gjennom resten av måneden.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Hvordan skriver du verdien NORGESPRICE fra enumen PowerAgreementType?',o:['PowerAgreementType.NORGESPRICE','"NORGESPRICE"','new PowerAgreementType("NORGESPRICE")','PowerAgreementType[2]'],a:0,w:'En enum-verdi skrives som Typenavn.VERDI. Den er ikke en streng, og du lager den ikke med new.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Hva er customers[0] rett etter new Customer[5]?',o:['null','Et tomt Customer-objekt','0','""'],a:0,w:'En referansetabell starter med bare null. Ingen Customer-objekter finnes før du lager dem med new.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'Hvorfor står customers[i] != null først i if (customers[i] != null && customers[i].getCustomer_id() == id)?',o:['&& stopper hvis venstre side er usann, så vi unngår NullPointerException','Det er bare for lesbarhetens skyld','Java krever at null-sjekker står først','For å telle kundene'],a:0,w:'Er plassen null, sjekkes ikke høyre side. Uten sjekken ville kallet på getCustomer_id() krasjet.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'customers er [Alice, null, Bob, null, Carl]. Hvor lang er tabellen getCustomers() returnerer?',o:['3','5','2','4'],a:0,w:'getCustomers teller først de som ikke er null (countNonNull) og lager en ny tabell med akkurat den lengden.'},
+  {s:'java',t:'JavEl',src:'JavEl',q:'computeAmount skal regne ulikt for hver avtale. Hva passer best?',o:['En switch på c.getAgreement()','En for-løkke over avtalene','Tre ulike konstruktører','En egen klasse for hver måned'],a:0,w:'Med en switch på enumen får hver avtale sin egen case: SPOTPRICE, POWERSUPPORT og NORGESPRICE.'},
+  // MAT101 · Oblig 1
+  {s:'math',t:'Mengder',src:'Oblig 1',q:'X = {1, 2, 3} og Y = {2, 3, 4}. Hva er X ∆ Y = (X ∖ Y) ∪ (Y ∖ X)?',o:['{1, 4}','{2, 3}','{1, 2, 3, 4}','{1}'],a:0,w:'Symmetrisk differanse er elementene som er i nøyaktig én av mengdene: 1 og 4.'},
+  {s:'math',t:'Mengder',src:'Oblig 1',q:'Hva trenger du for å motbevise en mengdeformel?',o:['Ett moteksempel der venstre og høyre side blir ulike','At formelen feiler for alle mengder','Et Venn-diagram','At A, B og C er tomme'],a:0,w:'Én konkret situasjon der sidene er ulike holder. Velg små mengder, for eksempel A = {1}, B = {2} og C = {1}.'},
+  {s:'math',t:'Mengder',src:'Oblig 1',q:'Hva er B ∪ (B ∖ A)?',o:['B','A ∪ B','B ∖ A','∅'],a:0,w:'B ∖ A er en delmengde av B. Unionen med B gir derfor bare B.'},
+  {s:'math',t:'Mengder',src:'Oblig 1',q:'Hvor mange elementer har P({a, b, c})?',o:['8','6','3','9'],a:0,w:'Potensmengden har 2³ = 8 elementer, medregnet ∅ og {a, b, c}.'},
+  {s:'math',t:'Mengder',src:'Oblig 1',q:'S = {1, 2, 3, 4} og X = {2, 4}. Hva er indikatorfunksjonen I_X(3)?',o:['0','1','3','{3}'],a:0,w:'I_X(x) er 1 hvis x ∈ X og 0 ellers. 3 er ikke i X.'},
+  {s:'math',t:'Relasjoner',src:'Oblig 1',q:'På P({a, b, c}) betyr A J B at A ∩ B ≠ ∅. Gjelder {a, b} J {b, c}?',o:['Ja, de har b felles','Nei, mengdene er ulike','Nei, fordi c ∉ {a, b}','Ja, fordi begge har to elementer'],a:0,w:'{a, b} ∩ {b, c} = {b}, som ikke er tom.'},
+  {s:'math',t:'Relasjoner',src:'Oblig 1',q:'Samme relasjon J. Gjelder ∅ J {a}?',o:['Nei, snittet er tomt','Ja, ∅ er en delmengde av alt','Ja, fordi a ∈ {a}','Det kan ikke avgjøres'],a:0,w:'∅ ∩ {a} = ∅. ∅ har ingen elementer å dele med noen.'},
+  {s:'math',t:'Relasjoner',src:'Oblig 1',q:'På A = {1, 2, 3, 4} er x ∼ y hvis x − y = 2. Hvilke par er med?',o:['{(3, 1), (4, 2)}','{(1, 3), (2, 4)}','{(1, 3), (3, 1), (2, 4), (4, 2)}','{(2, 0), (3, 1), (4, 2)}'],a:0,w:'Bare 3 − 1 og 4 − 2 gir 2. (2, 0) er ikke med, fordi 0 ∉ A.'},
+  {s:'math',t:'Relasjoner',src:'Oblig 1',q:'Hvilke egenskaper har relasjonen {(3, 1), (4, 2)} på {1, 2, 3, 4}?',o:['Antisymmetrisk og transitiv','Refleksiv og symmetrisk','Bare symmetrisk','Det er en ekvivalensrelasjon'],a:0,w:'Ingen par går begge veier, så den er antisymmetrisk. Det finnes ingen kjede x → y → z, så den er tomt transitiv.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 1',q:'f(x) = x hvis x er et partall, ellers 2x. Hva er f[{1, 2, 3}]?',o:['{2, 6}','{2, 2, 6}','{1, 2, 3}','{2, 4, 6}'],a:0,w:'f(1) = 2, f(2) = 2 og f(3) = 6. I en mengde skrives 2 bare én gang.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 1',q:'Er den samme f injektiv?',o:['Nei, f(1) = f(2) = 2','Ja, ulike x gir ulik f(x)','Ja, den er definert for alle n','Nei, fordi den ikke er surjektiv'],a:0,w:'To ulike input med samme output er et moteksempel mot injektivitet.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 1',q:'f(x) = 2x og g(x) = x + 3. Hva er (g ∘ f)(x)?',o:['2x + 3','2x + 6','x + 5','2(x + 3)'],a:0,w:'g ∘ f betyr g(f(x)): først f, så g. g(2x) = 2x + 3.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 1',q:'Er h(x) = 2x + 3 bijektiv fra ℝ til ℝ?',o:['Ja, inversen er (y − 3)/2','Nei, den er ikke surjektiv','Nei, den er ikke injektiv','Bare på ℕ'],a:0,w:'For hver y finnes nøyaktig én x = (y − 3)/2. Da er den både injektiv og surjektiv.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 1',q:'Hvordan motbeviser du at en funksjon er surjektiv?',o:['Finn en verdi i kodomenet som ingen x treffer','Finn to x med samme verdi','Vis at den er voksende','Regn ut f(0)'],a:0,w:'To x med samme verdi motbeviser injektivitet. For surjektivitet trenger du en verdi som aldri blir truffet.'},
+  {s:'math',t:'Haskell',src:'Oblig 1',q:'Hvilken linje definerer multi riktig i Haskell?',o:['multi x y = x * y','multi = x * y','multi(x, y) { return x * y; }','multi x y == x * y'],a:0,w:'I Haskell står parameterne etter navnet, uten parenteser og komma. Typen skrives `multi :: Int -> Int -> Int`.'},
+  // MAT101 · Oblig 2
+  {s:'math',t:'Relasjoner',src:'Oblig 2',q:'På heltallene betyr x R y at x − y er delelig med 3. Hvor mange ekvivalensklasser har R?',o:['3','1','Uendelig mange','2'],a:0,w:'Klassene er tallene med rest 0, 1 og 2 ved deling på 3.'},
+  {s:'math',t:'Relasjoner',src:'Oblig 2',q:'x R y hvis x − y = 3n for en n ∈ ℕ (så n ≥ 0). Er R symmetrisk?',o:['Nei, (5, 2) er med, men (2, 5) krever n = −1','Ja, x − y og y − x er begge delelige med 3','Ja, fordi 0 ∈ ℕ','Bare hvis x = y'],a:0,w:'Kravet n ∈ ℕ gjør at x må være minst like stor som y. Les alltid hvilken tallmengde n kommer fra.'},
+  {s:'math',t:'Logikk',src:'Oblig 2',q:'a ⋆ b = ¬a ∧ ¬b. Når er a ⋆ b sann?',o:['Bare når både a og b er usanne','Når minst én er usann','Når nøyaktig én er sann','Alltid'],a:0,w:'Både ¬a og ¬b må være sanne. Det er det samme som ¬(a ∨ b).'},
+  {s:'math',t:'Logikk',src:'Oblig 2',q:'a ◦ b = ¬a ∨ ¬b. Når er a ◦ b usann?',o:['Når begge er sanne','Når begge er usanne','Når nøyaktig én er sann','Aldri'],a:0,w:'«Eller» er bare usann når begge sider er usanne, altså når a og b begge er sanne.'},
+  {s:'math',t:'Logikk',src:'Oblig 2',q:'Hva er disjunktiv normalform (DNF)?',o:['En «eller» av «og»-ledd','En «og» av «eller»-ledd','Et uttrykk uten negasjon','En sannhetstabell'],a:0,w:'For eksempel (a ∧ ¬b) ∨ (¬a ∧ b). Hvert ledd svarer til en rad i sannhetstabellen der uttrykket er sant.'},
+  {s:'math',t:'Predikatlogikk',src:'Oblig 2',q:'P(x): x er kaffe. R(x): x er godt. Hvordan skriver du «Alt som er kaffe, er godt»?',o:['∀x(P(x) → R(x))','∀x(P(x) ∧ R(x))','∃x(P(x) ∧ R(x))','∀x(R(x) → P(x))'],a:0,w:'«Alt som er …, er …» blir ∀ med →. Med ∧ ville det betydd at alt er kaffe og godt.'},
+  {s:'math',t:'Predikatlogikk',src:'Oblig 2',q:'Hvordan skriver du «For ethvert heltall x finnes et heltall k slik at x + k = 0»?',o:['∀x ∃k (x + k = 0)','∃k ∀x (x + k = 0)','∃x ∃k (x + k = 0)','∀x ∀k (x + k = 0)'],a:0,w:'Rekkefølgen betyr noe. ∃k ∀x ville betydd at én og samme k virker for alle x.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 2',q:'f: ℤ × ℤ → ℤ, f(n, k) = n · k. Er f injektiv?',o:['Nei, f(2, 3) = f(3, 2)','Ja','Ja, fordi n og k er heltall','Nei, fordi produktet kan være negativt'],a:0,w:'To ulike par gir samme verdi.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 2',q:'g: ℤ → ℤ × ℤ, g(n) = (n, n + 1). Er g surjektiv?',o:['Nei, for eksempel treffes (0, 0) aldri','Ja','Ja, fordi g er injektiv','Nei, fordi g ikke er injektiv'],a:0,w:'(0, 0) krever n = 0 og n + 1 = 0 samtidig, og det går ikke.'},
+  {s:'math',t:'Funksjoner',src:'Oblig 2',q:'g(n) = (n, n + 1) og f(n, k) = n · k. Hva er (f ∘ g)(3)?',o:['12','9','7','(3, 4)'],a:0,w:'g(3) = (3, 4), og f(3, 4) = 12. f ∘ g er veldefinert fordi g gir par, og f tar inn par.'},
+  {s:'math',t:'Haskell',src:'Oblig 2',q:'Hva gir dette i Haskell?',c:'[x | x <- [1..10], even x]',o:['[2,4,6,8,10]','[1,3,5,7,9]','[1..10]','5'],a:0,w:'Les det som «x, der x hentes fra 1 til 10 og x er et partall».'},
+  {s:'math',t:'Haskell',src:'Oblig 2',q:'Hva gir dette i Haskell?',c:'[(x, y) | x <- [1..3], y <- [1..3], x + y == 4]',o:['[(1,3),(2,2),(3,1)]','[(1,3),(3,1)]','[(2,2)]','[(1,3),(2,2),(3,1),(4,0)]'],a:0,w:'For hver x prøves alle y, og bare parene med sum 4 blir med. 4 og 0 er ikke i listene.'},
+  {s:'math',t:'Haskell',src:'Oblig 2',q:'Hva gir dette i Haskell?',c:'length [(x, y) | x <- [1..10], y <- [11..20]]',o:['100','20','10','200'],a:0,w:'Det kartesiske produktet av to lister med 10 elementer har 10 · 10 = 100 tupler.'},
+  {s:'math',t:'Haskell',src:'Oblig 2',q:'Hva gir dette i Haskell?',c:'not True || False',o:['False','True','En feilmelding','not'],a:0,w:'not binder sterkest: (not True) || False = False || False = False.'},
+  {s:'math',t:'Tallteori',src:'Lab 3',q:'Java-metoden b(x, y) fra lab 3 trekker det minste tallet fra det største til de er like. Hva regner den ut?',o:['Største felles divisor','Minste felles multiplum','Resten ved divisjon','Summen'],a:0,w:'Det er Euklids algoritme med subtraksjon i stedet for modulo. b(28, 12) gir gcd(28, 12) = 4.'}
+);
+
+// Sporinger
+const fmtArr = a => '{' + a.join(', ') + '}';
+const fmtMat = m => '{' + m.map(fmtArr).join(', ') + '}';
+function traceReverser() {
+  const t = [1, 2, 3], ny = [0, 0, 0];
+  const s = [{ l: 0, v: { tabell: fmtArr(t) }, n: 'Tabellen har 3 tall.' },
+    { l: 1, v: { tabell: fmtArr(t), ny: fmtArr(ny) }, n: 'new lager en ny tabell med plass til 3 tall. Den er fylt med 0.' }];
+  for (let i = 0; i < 3; i++) {
+    s.push({ l: 2, v: { ny: fmtArr(ny), i }, n: 'i = ' + i + '. Er ' + i + ' < 3? Ja.' });
+    ny[i] = t[2 - i];
+    s.push({ l: 3, v: { ny: fmtArr(ny), i }, n: 'ny[' + i + '] = tabell[' + (2 - i) + '] = ' + t[2 - i] + '. Indeksen 3 − 1 − ' + i + ' går baklengs.' });
+  }
+  s.push({ l: 2, v: { ny: fmtArr(ny), i: 3 }, n: 'i = 3. Er 3 < 3? Nei, løkka er ferdig.' });
+  s.push({ l: 5, v: { ny: fmtArr(ny) }, o: '[3,2,1]', n: 'tilStreng gir "[3,2,1]". Den opprinnelige tabellen er uendret.' });
+  return s;
+}
+function traceSortert() {
+  return [
+    { l: 0, v: { t: '{1, 4, 4, 7}' }, n: 'Vi sjekker om hvert tall er større enn tallet før.' },
+    { l: 1, v: { i: 0 }, n: 'i = 0. Er 0 < 3 (t.length − 1)? Ja.' },
+    { l: 2, v: { i: 0, 't[i]': 1, 't[i+1]': 4 }, n: 'Er 1 >= 4? Nei, gå videre.' },
+    { l: 1, v: { i: 1 }, n: 'i = 1. Er 1 < 3? Ja.' },
+    { l: 2, v: { i: 1, 't[i]': 4, 't[i+1]': 4 }, n: 'Er 4 >= 4? Ja! To like tall er ikke stigende.' },
+    { l: 3, v: { i: 1 }, ret: 'false', n: 'Metoden returnerer false med en gang. Resten av tabellen sjekkes ikke.' }
+  ];
+}
+function traceEuklid() {
+  let x = 28, y = 12;
+  const s = [{ l: 0, v: { x, y }, n: 'Metoden kalles med b(28, 12).' }];
+  for (;;) {
+    if (x === y) { s.push({ l: 1, v: { x, y }, n: 'Er ' + x + ' != ' + y + '? Nei, de er like. Løkka er ferdig.' }); break; }
+    s.push({ l: 1, v: { x, y }, n: 'Er ' + x + ' != ' + y + '? Ja, inn i løkka.' });
+    s.push({ l: 2, v: { x, y }, o: 'x = ' + x + ', y = ' + y, n: 'Skriver ut x og y.' });
+    if (x > y) {
+      s.push({ l: 3, v: { x, y }, n: 'Er ' + x + ' > ' + y + '? Ja.' });
+      x = x - y;
+      s.push({ l: 4, v: { x, y }, n: 'x = x − y gir x = ' + x + '.' });
+    } else {
+      s.push({ l: 3, v: { x, y }, n: 'Er ' + x + ' > ' + y + '? Nei, gå til else.' });
+      y = y - x;
+      s.push({ l: 6, v: { x, y }, n: 'y = y − x gir y = ' + y + '.' });
+    }
+  }
+  s.push({ l: 9, v: { x, y }, ret: String(x), n: 'Returnerer ' + x + '. Det er største felles divisor av 28 og 12, akkurat som Euklids algoritme i MAT101.' });
+  return s;
+}
+function traceSupport() {
+  return [
+    { l: 0, v: { usage: '2.0' }, n: 'Kunden bruker 2 kWh denne timen.' },
+    { l: 1, v: { usage: '2.0', price: '1.4375' }, n: 'Spotprisen er 1,4375 kr per kWh.' },
+    { l: 2, v: { usage: '2.0', price: '1.4375', minBruk: '0.9375' }, n: 'Grensen er 93,75 øre, altså 0,9375 kr.' },
+    { l: 3, v: { usage: '2.0', price: '1.4375', minBruk: '0.9375' }, n: 'Er 1.4375 > 0.9375? Ja, prisen er over grensen.' },
+    { l: 4, v: { 'price - minBruk': '0.5' }, n: 'Delen over grensen er 0,5 kr. Staten dekker 90 % av den for hver kWh.' },
+    { l: 4, v: { 'price - minBruk': '0.5' }, ret: '0.9', n: '2.0 · 0.5 · 0.90 = 0.9. Kunden får 0,90 kr i støtte denne timen.' }
+  ];
+}
+function traceAdd() {
+  const a = '[Alice, null, Bob, null]', b = '[Alice, Charlie, Bob, null]';
+  return [
+    { l: 0, v: { customers: a, c: 'Charlie', i: 0 }, n: 'Vi skal sette inn Charlie. i = 0.' },
+    { l: 1, v: { customers: a, i: 0 }, n: 'Er customers[0] null? Nei, der står Alice.' },
+    { l: 0, v: { customers: a, i: 1 }, n: 'i = 1. Er 1 < 4? Ja.' },
+    { l: 1, v: { customers: a, i: 1 }, n: 'Er customers[1] null? Ja, plassen er ledig.' },
+    { l: 2, v: { customers: b, i: 1 }, n: 'Charlie settes inn på plass 1.' },
+    { l: 3, v: { customers: b, i: 1 }, ret: 'true', n: 'Returnerer true med en gang, slik at Charlie bare settes inn én gang.' }
+  ];
+}
+function traceSkaler() {
+  const m = [[1, 2], [3, 4]], ny = [[0, 0], [0, 0]];
+  const s = [{ l: 0, v: { m: fmtMat(m) }, n: 'En 2×2-matrise.' },
+    { l: 1, v: { m: fmtMat(m), ny: fmtMat(ny) }, n: 'En ny matrise med samme størrelse, fylt med 0.' }];
+  for (let i = 0; i < 2; i++) {
+    s.push({ l: 2, v: { ny: fmtMat(ny), i }, n: 'i = ' + i + '. Vi jobber med rad ' + i + '.' });
+    for (let j = 0; j < 2; j++) {
+      s.push({ l: 3, v: { ny: fmtMat(ny), i, j }, n: 'j = ' + j + '. Er ' + j + ' < 2? Ja.' });
+      ny[i][j] = m[i][j] * 3;
+      s.push({ l: 4, v: { ny: fmtMat(ny), i, j }, n: 'ny[' + i + '][' + j + '] = ' + m[i][j] + ' · 3 = ' + ny[i][j] + '.' });
+    }
+    s.push({ l: 3, v: { ny: fmtMat(ny), i, j: 2 }, n: 'j = 2. Er 2 < 2? Nei, raden er ferdig.' });
+  }
+  s.push({ l: 2, v: { m: fmtMat(m), ny: fmtMat(ny) }, n: 'i = 2. Er 2 < 2? Nei. ny er ferdig, og m er uendret.' });
+  return s;
+}
+function traceSiffer() {
+  let hjelp = 7569, aS = 0;
+  const s = [{ l: 0, v: { tall: 7569 }, n: 'tall er 7569.' }, { l: 1, v: { tall: 7569, hjelp }, n: 'hjelp er en kopi som vi kan endre.' }, { l: 2, v: { hjelp, aS }, n: 'aS starter på 0.' }];
+  do {
+    const f = hjelp; hjelp = Math.floor(hjelp / 10);
+    s.push({ l: 4, v: { hjelp, aS }, n: f + ' / 10 = ' + hjelp + '. Heltallsdivisjon fjerner siste siffer.' });
+    aS++;
+    s.push({ l: 5, v: { hjelp, aS }, n: 'aS øker til ' + aS + '.' });
+    s.push({ l: 6, v: { hjelp, aS }, n: 'Er ' + hjelp + ' > 0? ' + (hjelp > 0 ? 'Ja, en runde til.' : 'Nei, løkka er ferdig.') });
+  } while (hjelp > 0);
+  s.push({ l: 7, v: { aS }, o: '7569 har 4 siffer', n: 'Løkka teller hvor mange siffer tallet har.' });
+  return s;
+}
+
+T.push(
+  { id: 't-reverser', s: 'java', t: 'Tabeller', src: 'Innlevering 2', title: 'Se reverser lage en ny tabell',
+    code: ['int[] tabell = {1, 2, 3};', 'int[] ny = new int[tabell.length];', 'for (int i = 0; i < tabell.length; i++) {', '    ny[i] = tabell[tabell.length - 1 - i];', '}', 'System.out.println(Tabeller.tilStreng(ny));'], steps: traceReverser() },
+  { id: 't-sortert', s: 'java', t: 'Tabeller', src: 'Innlevering 2', title: 'Se erSortert finne to like tall',
+    code: ['int[] t = {1, 4, 4, 7};', 'for (int i = 0; i < t.length - 1; i++) {', '    if (t[i] >= t[i + 1]) {', '        return false;', '    }', '}', 'return true;'], steps: traceSortert() },
+  { id: 't-euklid', s: 'java', t: 'Løkker', src: 'Lab 3 · eksamen', title: 'Se b(28, 12) fra en gammel eksamen',
+    code: ['public static int b(int x, int y) {', '    while (x != y) {', '        System.out.println("x = " + x + ", y = " + y);', '        if (x > y) {', '            x = x - y;', '        } else {', '            y = y - x;', '        }', '    }', '    return x;', '}'], steps: traceEuklid() },
+  { id: 't-siffer', s: 'java', t: 'Løkker', src: 'Lab 3', title: 'Se do-while telle siffer',
+    code: ['int tall = 7569;', 'int hjelp = tall;', 'int aS = 0;', 'do {', '    hjelp = hjelp / 10;', '    aS = aS + 1;', '} while (hjelp > 0);', 'System.out.println(tall + " har " + aS + " siffer");'], steps: traceSiffer() },
+  { id: 't-skaler', s: 'java', t: 'Matriser', src: 'Innlevering 2', title: 'Se skaler gå gjennom en matrise',
+    code: ['int[][] m = {{1, 2}, {3, 4}};', 'int[][] ny = new int[m.length][m[0].length];', 'for (int i = 0; i < m.length; i++) {', '    for (int j = 0; j < m[i].length; j++) {', '        ny[i][j] = m[i][j] * 3;', '    }', '}'], steps: traceSkaler() },
+  { id: 't-support', s: 'java', t: 'JavEl', src: 'JavEl', title: 'Se strømstøtten bli regnet ut',
+    code: ['double usage = 2.0;', 'double price = 1.4375;', 'double minBruk = 0.9375;', 'if (price > minBruk) {', '    return usage * (price - minBruk) * 0.90;', '}', 'return 0.0;'], steps: traceSupport() },
+  { id: 't-add', s: 'java', t: 'JavEl', src: 'JavEl', title: 'Se addCustomer finne en ledig plass',
+    code: ['for (int i = 0; i < customers.length; i++) {', '    if (customers[i] == null) {', '        customers[i] = c;', '        return true;', '    }', '}', 'return false;'], steps: traceAdd() },
+  { id: 't-stjerne', s: 'math', t: 'Logikk', src: 'Oblig 2', title: 'Se a ⋆ b og a ◦ b bli regnet ut',
+    table: { head: ['a', 'b', '¬a', '¬b', 'a ⋆ b', 'a ◦ b'], rows: [['S', 'S', 'U', 'U', 'U', 'U'], ['S', 'U', 'U', 'S', 'U', 'S'], ['U', 'S', 'S', 'U', 'U', 'S'], ['U', 'U', 'S', 'S', 'S', 'S']], hide: [2, 3, 4, 5] },
+    steps: [
+      { r: 0, n: 'a og b er sanne, så ¬a og ¬b er usanne. Både ⋆ (og) og ◦ (eller) blir U.' },
+      { r: 1, n: '¬b er sann. ⋆ krever at begge negasjonene er sanne: U. ◦ trenger bare én: S.' },
+      { r: 2, n: '¬a er sann. Samme resultat: ⋆ blir U og ◦ blir S.' },
+      { r: 3, n: 'Begge negasjonene er sanne, så både ⋆ og ◦ blir S.' },
+      { r: 3, hl: [4], n: 'a ⋆ b er bare sann når begge er usanne. Det er det samme som ¬(a ∨ b).' },
+      { r: 3, hl: [5], n: 'a ◦ b er bare usann når begge er sanne. Det er det samme som ¬(a ∧ b).' }
+    ] }
+);
+
+B.push(
+  { id: 'b-foreach', s: 'java', t: 'Tabeller', src: 'Lab 10', q: 'Tabellen skulle blitt {2, 3, 4}, men er fortsatt {1, 2, 3}. Hvor er feilen?',
+    lines: ['int[] tab = {1, 2, 3};', 'for (int x : tab) {', '    x = x + 1;', '}', 'System.out.println(Tabeller.tilStreng(tab));'], bug: 2,
+    why: 'I en utvidet for-løkke er x en kopi. Å endre x endrer ikke tabellen.', fix: 'for (int i = 0; i < tab.length; i++) {\n    tab[i] = tab[i] + 1;\n}' },
+  { id: 'b-sortert', s: 'java', t: 'Tabeller', src: 'Innlevering 2', q: 'erSortert krasjer med ArrayIndexOutOfBoundsException. Hvor er feilen?',
+    lines: ['public static boolean erSortert(int[] t) {', '    for (int i = 0; i < t.length; i++) {', '        if (t[i] >= t[i + 1]) {', '            return false;', '        }', '    }', '    return true;', '}'], bug: 1,
+    why: 'Når i er siste indeks, finnes ikke t[i + 1]. Løkka må stoppe ett steg før.', fix: '    for (int i = 0; i < t.length - 1; i++) {' },
+  { id: 'b-posisjon', s: 'java', t: 'Tabeller', src: 'Innlevering 2', q: 'posisjonTall({4, 7, 9}, 7) gir -1, men skulle gitt 1. Hvor er feilen?',
+    lines: ['public static int posisjonTall(int[] t, int tall) {', '    for (int i = 0; i < t.length; i++) {', '        if (t[i] == tall) {', '            return i;', '        } else {', '            return -1;', '        }', '    }', '    return -1;', '}'], bug: 5,
+    why: 'Metoden gir opp etter første element. Du vet først at tallet ikke finnes når hele løkka er ferdig.', fix: '        if (t[i] == tall) {\n            return i;\n        }\n    }\n    return -1;   // bare her, etter løkka' },
+  { id: 'b-settsammen', s: 'java', t: 'Tabeller', src: 'Innlevering 2', q: 'settSammen({1, 2}, {3, 4}) gir [3,4,0,0] i stedet for [1,2,3,4]. Hvor er feilen?',
+    lines: ['int[] ny = new int[t1.length + t2.length];', 'for (int i = 0; i < t1.length; i++) {', '    ny[i] = t1[i];', '}', 'for (int j = 0; j < t2.length; j++) {', '    ny[j] = t2[j];', '}'], bug: 5,
+    why: 't2 skrives over starten av tabellen. Den må starte etter t1.', fix: '    ny[t1.length + j] = t2[j];' },
+  { id: 'b-tilstreng', s: 'java', t: 'Tabeller', src: 'Innlevering 2', q: 'tilStreng({42, 67, 89}) gir "[42,67,89,]". Hvor er feilen?',
+    lines: ['String s = "[";', 'for (int i = 0; i < t.length; i++) {', '    s += t[i] + ",";', '}', 's += "]";', 'return s;'], bug: 2,
+    why: 'Komma legges til etter hvert tall, også det siste.', fix: '    s += t[i];\n    if (i < t.length - 1) {\n        s += ",";\n    }' },
+  { id: 'b-skaler', s: 'java', t: 'Matriser', src: 'Innlevering 2', q: 'Testen assertFalse(skaler == a) feiler, og den opprinnelige matrisen blir endret. Hvor er feilen?',
+    lines: ['public static int[][] skaler(int tall, int[][] m) {', '    int[][] ny = m;', '    for (int i = 0; i < m.length; i++) {', '        for (int j = 0; j < m[i].length; j++) {', '            ny[i][j] = m[i][j] * tall;', '        }', '    }', '    return ny;', '}'], bug: 1,
+    why: 'ny = m kopierer bare pekeren. ny og m er da samme matrise.', fix: '    int[][] ny = new int[m.length][m[0].length];' },
+  { id: 'b-null', s: 'java', t: 'JavEl', src: 'JavEl', q: 'getCustomer krasjer med NullPointerException når tabellen har ledige plasser. Hvor er feilen?',
+    lines: ['public Customer getCustomer(int id) {', '    for (int i = 0; i < customers.length; i++) {', '        if (customers[i].getCustomer_id() == id) {', '            return customers[i];', '        }', '    }', '    return null;', '}'], bug: 2,
+    why: 'En ledig plass er null, og du kan ikke kalle metoder på null.', fix: '        if (customers[i] != null && customers[i].getCustomer_id() == id) {' },
+  { id: 'b-ore', s: 'java', t: 'JavEl', src: 'JavEl', q: 'Prisene i tabellene er i kroner, men støtten blir alltid 0. Hvor er feilen?',
+    lines: ['private static double getSupport(double usage, double price) {', '    double grense = 93.75;', '    if (price > grense) {', '        return usage * (price - grense) * 0.90;', '    }', '    return 0.0;', '}'], bug: 1,
+    why: '93,75 øre er 0,9375 kroner. Ingen pris er over 93,75 kr, så støtten blir alltid 0.', fix: '    double grense = 0.9375;' }
+);
+
+V.push(
+  { id: 'v-2d', s: 'java', t: 'Matriser', title: '2D-tabeller i Java', who: 'Bro Code', q: 'bro code java 2d arrays' },
+  { id: 'v-enum', s: 'java', t: 'JavEl', title: 'enum i Java', who: 'Java-forklaring', q: 'java enum tutorial beginners' },
+  { id: 'v-junit', s: 'java', t: 'Testing', title: 'JUnit-tester i IntelliJ', who: 'Java-forklaring', q: 'junit 5 tutorial beginners intellij' },
+  { id: 'v-rel', s: 'math', t: 'Relasjoner', title: 'Egenskaper ved relasjoner', who: 'TrevTutor', q: 'trevtutor properties of relations reflexive symmetric transitive' },
+  { id: 'v-fun', s: 'math', t: 'Funksjoner', title: 'Injektiv og surjektiv', who: 'Diskret matte', q: 'injective surjective bijective functions discrete math' },
+  { id: 'v-hs', s: 'math', t: 'Haskell', title: 'Listeforståelse i Haskell', who: 'Haskell', q: 'haskell list comprehension tutorial' }
+);
+
+F.push(
+  { id: 'f25', s: 'java', f: 'Hva betyr `m.length` og `m[0].length` for en 2D-tabell?', b: 'Antall rader og antall kolonner i rad 0.' },
+  { id: 'f26', s: 'java', f: 'Hvorfor endrer ikke `for (int x : tab) x++;` tabellen?', b: 'x er en kopi. Bruk en vanlig for-løkke med `tab[i]`.' },
+  { id: 'f27', s: 'java', f: 'Hva er en referansetabell?', b: 'En tabell med pekere til objekter, for eksempel `Customer[]`. Ledige plasser er null.' },
+  { id: 'f28', s: 'java', f: 'Hva er en enum?', b: 'En type med et fast sett verdier, for eksempel `PowerAgreementType.SPOTPRICE`.' },
+  { id: 'f29', s: 'java', f: 'Strømstøtte for én time?', b: 'forbruk · (pris − 0,9375) · 0,90, men bare når prisen er over 0,9375 kr.' },
+  { id: 'f30', s: 'java', f: 'Norgespris for én time?', b: 'forbruk · 0,50 kr' },
+  { id: 'f31', s: 'java', f: 'Når kan matrisene A og B ganges?', b: 'Når antall kolonner i A er lik antall rader i B.' },
+  { id: 'f32', s: 'java', f: '`int[][] ny = m;` lager …', b: 'Ingen ny matrise, bare en ny peker til den samme. Bruk `new`.' },
+  { id: 'f33', s: 'math', f: 'X ∆ Y (symmetrisk differanse)?', b: '(X ∖ Y) ∪ (Y ∖ X): elementene som er i nøyaktig én av mengdene.' },
+  { id: 'f34', s: 'math', f: 'Indikatorfunksjonen I_X(x)?', b: '1 hvis x ∈ X, ellers 0.' },
+  { id: 'f35', s: 'math', f: 'Bildet f[A]?', b: 'Mengden {f(x) | x ∈ A}.' },
+  { id: 'f36', s: 'math', f: '(g ∘ f)(x)?', b: 'g(f(x)): først f, så g.' },
+  { id: 'f37', s: 'math', f: 'Antisymmetrisk betyr …', b: 'Hvis x R y og y R x, så er x = y.' },
+  { id: 'f38', s: 'math', f: 'Haskell: ∧, ∨ og ¬?', b: '`&&`, `||` og `not`' },
+  { id: 'f39', s: 'math', f: 'Haskell: listeforståelse?', b: '`[x | x <- liste, betingelse]`, for eksempel `[x | x <- [1..10], even x]`.' },
+  { id: 'f40', s: 'math', f: 'a ⋆ b = ¬a ∧ ¬b er det samme som …', b: '¬(a ∨ b). Sann bare når begge er usanne.' }
+);
+
+A.push(
+  {id:'javel', s:'java', short:'JavEl-prosjektet', kicker:'DAT100 · Prosjekt', hero:'kWh · NOK',
+   title:'JavEl: Hele strømprosjektet forklart',
+   ingress:'Prosjektet går fra én tabell til objekter som peker på hverandre. Her er hver del, og hvilket Java-begrep den trener.',
+   topics:['JavEl'],
+   body:[
+    ['table',[['Oppgave','Handler om','Java-begrep'],['1','Strøm for én dag','1D-tabell og løkker'],['2','Strøm for en måned','2D-tabell og while'],['3','Kunde','Klasse, konstruktør og enum'],['4','Kunder','Referansetabell med null'],['5','Faktura','Objekter som peker på objekter']]],
+    ['h','Tre måter å betale for strøm'],
+    ['ul',['Spotpris: forbruk · pris, time for time. Summen av alle timene er prisen for dagen.','Strømstøtte: Når prisen er over 0,9375 kr (93,75 øre), dekkes 90 % av det som er over. Kunden betaler spotpris minus støtte.','Norgespris: fast 0,50 kr per kWh, uansett spotpris.']],
+    ['code','private static double getSupport(double usage, double price) {\n    if (price > 0.9375) {\n        return usage * (price - 0.9375) * 0.90;\n    }\n    return 0.0;\n}'],
+    ['p','Pass på enheten. Prisene i tabellene er i kroner, så 93,75 øre må skrives `0.9375`.'],
+    ['h','Fra dag til måned'],
+    ['p','En måned er en tabell av dager, og hver dag er en tabell av timer: `double[][] usage`. Du kan gjenbruke metodene fra oppgave 1 på hver rad, for eksempel `DailyPower.computePowerUsage(usage[i])`.'],
+    ['p','I `exceedThreshold` skal du bruke while, slik at metoden stopper så snart forbruket er over grensen.'],
+    ['h','Referansetabellen'],
+    ['code','Customer[] customers = new Customer[5];   // fem plasser, alle null'],
+    ['p','En plass som er null, er ledig. `addCustomer` setter inn på første ledige plass. `removeCustomer` setter plassen tilbake til null og returnerer kunden som ble fjernet. Sjekk alltid `customers[i] != null` før du kaller en metode på elementet.'],
+    ['h','Fakturaen'],
+    ['p','Et Invoice-objekt har en peker til et Customer-objekt. I `computeAmount` velger du beregning med en switch på `c.getAgreement()`.'],
+    ['code','switch (c.getAgreement()) {\n    case SPOTPRICE:\n        amount = MonthlyPower.computeSpotPrice(usage, prices);\n        break;\n    case POWERSUPPORT:\n        amount = MonthlyPower.computeSpotPrice(usage, prices)\n               - MonthlyPower.computePowerSupport(usage, prices);\n        break;\n    case NORGESPRICE:\n        amount = MonthlyPower.computeNorgesPrice(usage);\n        break;\n}'],
+    ['tip','Prosjektet har ingen ferdige tester. Skriv små tester i main-metodene, og regn ut én time for hånd for å sjekke svaret.']
+   ]},
+  {id:'tabellmetoder', s:'java', short:'Tabellmetoder', kicker:'DAT100 · Innlevering 2', hero:'reverser(t)',
+   title:'Fem mønstre som løser hele Innlevering 2',
+   ingress:'Alle metodene i Tabeller.java bygger på noen få mønstre. Kan du dem, klarer du nesten alle tabelloppgaver på eksamen.',
+   topics:['Tabeller'],
+   body:[
+    ['h','1. Akkumulator: summer'],
+    ['code','int sum = 0;\nfor (int x : tabell) {\n    sum += x;\n}\nreturn sum;'],
+    ['p','Start med en tom verdi og bygg opp svaret runde for runde. Samme mønster gir tilStreng, der du bygger en streng i stedet for en sum.'],
+    ['h','2. Søk med tidlig retur: finnesTall og posisjonTall'],
+    ['code','for (int i = 0; i < tabell.length; i++) {\n    if (tabell[i] == tall) {\n        return i;     // funnet: stopp med en gang\n    }\n}\nreturn -1;            // først her vet vi at tallet ikke finnes'],
+    ['p','Den vanligste feilen er å skrive `return -1` i en else inne i løkka. Da gir metoden opp etter første element.'],
+    ['h','3. Ny tabell: reverser'],
+    ['code','int[] ny = new int[tabell.length];\nfor (int i = 0; i < tabell.length; i++) {\n    ny[i] = tabell[tabell.length - 1 - i];\n}\nreturn ny;'],
+    ['p','Står det «returnerer en ny tabell», må du bruke `new`. Indeksen `tabell.length - 1 - i` går baklengs mens i går forlengs.'],
+    ['h','4. Sammenlign naboer: erSortert'],
+    ['code','for (int i = 0; i < tabell.length - 1; i++) {\n    if (tabell[i] >= tabell[i + 1]) {\n        return false;\n    }\n}\nreturn true;'],
+    ['p','Når du ser på `tabell[i + 1]`, må løkka stoppe ett steg tidligere. Ellers går du utenfor tabellen.'],
+    ['h','5. To løkker med forskyvning: settSammen'],
+    ['code','int[] ny = new int[t1.length + t2.length];\nfor (int i = 0; i < t1.length; i++) {\n    ny[i] = t1[i];\n}\nfor (int j = 0; j < t2.length; j++) {\n    ny[t1.length + j] = t2[j];\n}'],
+    ['tip','Innleveringen forbyr Arrays-klassen. Øv på å skrive løkkene selv, for det er det eksamen tester.']
+   ]},
+  {id:'matriser', s:'java', short:'Matriser', kicker:'DAT100 · 2D-tabeller', hero:'m[i][j]',
+   title:'Matriser: En tabell av tabeller',
+   ingress:'En 2D-tabell er ikke et rutenett i minnet. Den er en tabell der hvert element peker på en ny tabell, og det forklarer det meste.',
+   topics:['Matriser'],
+   body:[
+    ['code','int[][] m = {\n    {1, 2, 3},\n    {4, 5, 6}\n};\n\nm.length      // 2 rader\nm[0].length   // 3 kolonner i rad 0\nm[1][2]       // rad 1, kolonne 2: 6'],
+    ['p','Første indeks er raden, og andre er kolonnen. Siden hver rad er sin egen tabell, kan radene ha ulik lengde. Derfor skriver du `m[i].length` i den indre løkka.'],
+    ['h','Gå gjennom alle elementene'],
+    ['code','for (int i = 0; i < m.length; i++) {\n    for (int j = 0; j < m[i].length; j++) {\n        System.out.print(m[i][j] + " ");\n    }\n    System.out.println();\n}'],
+    ['p','Med utvidet for-løkke blir det kortere: `for (int[] rad : m)` og så `for (int tall : rad)`.'],
+    ['h','Ny matrise: skaler'],
+    ['code','int[][] ny = new int[m.length][m[0].length];'],
+    ['p','Skriver du `int[][] ny = m;`, får du bare en ny peker til den samme matrisen. Da endrer du originalen, og testen `assertFalse(skaler == a)` feiler.'],
+    ['h','Bytte to rader'],
+    ['code','int[] tmp = m[0];\nm[0] = m[2];\nm[2] = tmp;'],
+    ['p','Radene er pekere, så du bytter hele rader med tre tildelinger, uten løkke.'],
+    ['h','Multiplikasjon (valgfri oppgave)'],
+    ['p','A · B er lov når antall kolonner i A er lik antall rader i B. Svaret får radene til A og kolonnene til B. Hvert element er summen av rad i fra A ganget med kolonne j fra B.'],
+    ['code','int[][] c = new int[a.length][b[0].length];\nfor (int i = 0; i < a.length; i++) {\n    for (int j = 0; j < b[0].length; j++) {\n        for (int k = 0; k < b.length; k++) {\n            c[i][j] += a[i][k] * b[k][j];\n        }\n    }\n}'],
+    ['tip','Tegn matrisen som rader og kolonner på papir før du koder, og skriv i og j ved siden av.']
+   ]},
+  {id:'relasjoner', s:'math', short:'Relasjoner', kicker:'MAT101 · Oblig 1 og 2', hero:'x R y',
+   title:'Relasjoner: Fire egenskaper du må sjekke',
+   ingress:'Nesten alle relasjonsoppgaver spør om det samme: refleksiv, symmetrisk, antisymmetrisk og transitiv. Slik sjekker du dem én etter én.',
+   topics:['Relasjoner'],
+   body:[
+    ['p','En relasjon R på en mengde A er en mengde av par (x, y). Vi skriver x R y når paret er med.'],
+    ['table',[['Egenskap','Betyr','Motbevis med'],['Refleksiv','x R x for alle x','én x der (x, x) mangler'],['Symmetrisk','x R y gir y R x','ett par (x, y) uten (y, x)'],['Antisymmetrisk','x R y og y R x gir x = y','to ulike x og y med begge par'],['Transitiv','x R y og y R z gir x R z','en kjede uten snarvei']]],
+    ['p','En ekvivalensrelasjon er refleksiv, symmetrisk og transitiv. En partiell ordning er refleksiv, antisymmetrisk og transitiv.'],
+    ['h','Eksempel: «delelig med 3»'],
+    ['p','La x R y på heltallene bety at x − y = 3n for et heltall n.'],
+    ['ul',['Refleksiv: x − x = 0 = 3 · 0.','Symmetrisk: Er x − y = 3n, er y − x = 3 · (−n).','Transitiv: (x − y) + (y − z) = x − z, og summen av to tall som er delelige med 3, er delelig med 3.']],
+    ['p','Altså er R en ekvivalensrelasjon. Klassene er tallene med rest 0, 1 og 2 ved deling på 3.'],
+    ['h','Fellen: Når n må være naturlig'],
+    ['p','Krever oppgaven n ∈ ℕ, er n ≥ 0. Da er (5, 2) med, fordi 5 − 2 = 3 · 1, men (2, 5) krever n = −1. Relasjonen er altså ikke symmetrisk.'],
+    ['p','Om den er refleksiv, avhenger av om 0 regnes som et naturlig tall. Skriv hvilken definisjon du bruker.'],
+    ['h','Tegn den'],
+    ['p','Skriv elementene som punkter og tegn en pil fra x til y for hvert par. Refleksiv betyr en løkke på hvert punkt. Symmetrisk betyr at alle pilene går begge veier.'],
+    ['tip','Transitivitet kan være tomt sann. Finnes det ingen kjede x → y → z, er relasjonen transitiv.']
+   ]},
+  {id:'funksjoner', s:'math', short:'Funksjoner', kicker:'MAT101 · Funksjoner', hero:'g ∘ f',
+   title:'Injektiv, surjektiv, bijektiv: Slik beviser du det',
+   ingress:'Funksjonsoppgavene på obligene følger samme oppskrift. Vis det generelt for å bevise, og finn ett moteksempel for å motbevise.',
+   topics:['Funksjoner'],
+   body:[
+    ['table',[['Egenskap','Betyr','Motbevis med'],['Injektiv','f(a) = f(b) gir a = b','to ulike input med lik output'],['Surjektiv','hver y i kodomenet treffes','én y som aldri treffes'],['Bijektiv','både injektiv og surjektiv','motbevis én av dem']]],
+    ['h','Eksempel: f(x) = 2x + 3 på ℝ'],
+    ['code','Injektiv:  f(a) = f(b)\n           2a + 3 = 2b + 3\n           a = b                       ✓\n\nSurjektiv: gitt y, velg x = (y − 3)/2\n           f(x) = 2 · (y − 3)/2 + 3 = y   ✓'],
+    ['p','Den samme formelen fra ℕ til ℕ er ikke surjektiv, fordi for eksempel 2 aldri treffes. Domenet og kodomenet avgjør svaret.'],
+    ['h','Bildet f[A]'],
+    ['p','f[A] er mengden av alle f(x) der x ∈ A. Er f(x) = x² og A = {−1, 0, 1}, blir f[A] = {0, 1}. Like verdier skrives bare én gang.'],
+    ['h','Sammensetning'],
+    ['p','(g ∘ f)(x) = g(f(x)). Du bruker f først og g etterpå. Sammensetningen er bare veldefinert når verdiene til f ligger i domenet til g.'],
+    ['code','f(x) = 2x,   g(x) = x + 3\n(g ∘ f)(x) = g(2x) = 2x + 3\n(f ∘ g)(x) = f(x + 3) = 2x + 6'],
+    ['p','Rekkefølgen betyr noe: g ∘ f og f ∘ g er vanligvis ulike.'],
+    ['tip','Står det «bevis eller motbevis», prøv noen små tall først. Finner du to input med samme output, er du ferdig med injektivitet.']
+   ]},
+  {id:'haskell', s:'math', short:'Haskell', kicker:'MAT101 · Haskell', hero:'[x | x <- xs]',
+   title:'Haskell for MAT101: Mengder som kode',
+   ingress:'Haskell-oppgavene på obligene er mengdelære skrevet som kode. Listeforståelse ligner nesten tegn for tegn på mengdenotasjon.',
+   topics:['Haskell'],
+   body:[
+    ['table',[['Matte','Haskell'],['{1, 2, …, 10}','`[1..10]`'],['{x | x ∈ A, x partall}','`[x | x <- a, even x]`'],['A × B','`[(x, y) | x <- a, y <- b]`'],['p ∧ q, p ∨ q, ¬p','`p && q`, `p || q`, `not p`']]],
+    ['h','Tupler med betingelse'],
+    ['code','r = [(x, y) | x <- [1..4], y <- [1..4], x + y == 5]\n-- [(1,4),(2,3),(3,2),(4,1)]\n\nforste = [x | (x, y) <- r]\n-- [1,2,3,4]'],
+    ['p','I den andre linja hentes hvert par ut av r, og bare x tas vare på.'],
+    ['h','Funksjoner'],
+    ['code','dobbel :: Int -> Int\ndobbel x = 2 * x\n\nsum2 :: Int -> Int -> Int\nsum2 x y = x + y'],
+    ['p','Linja med :: er typesignaturen. `Int -> Int -> Int` betyr «tar to Int og gir en Int». Du kaller funksjonen uten parenteser: `sum2 3 4`.'],
+    ['h','Lag en sannhetstabell'],
+    ['code','[(a, b, not (a && b)) | a <- [True, False], b <- [True, False]]'],
+    ['p','Dette lager hele tabellen for ¬(a ∧ b) på én linje. Bytt ut uttrykket til slutt for å sjekke andre logikkoppgaver.'],
+    ['h','Kjør det'],
+    ['p','Lagre koden i en .hs-fil, skriv `ghci` i terminalen, last filen med `:l fil.hs` og skriv navnet på det du vil se.'],
+    ['tip','Les `<-` som «hentet fra» og `|` som «der». Da kan du lese koden høyt som mengdenotasjon.']
+   ]}
+);
+
+// ---------- TILSTAND ----------
+const KEY = 'eksamensfeed-v1';
+let state = { stats: {}, streak: 0, bestStreak: 0, xp: 0, days: {}, badges: [], swipe: {}, swiped: 0, bugs: {}, traces: {}, videos: {}, focusDone: 0 };
+try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+Q.forEach((q, i) => { q.id = q.s + i; });
+
+const feed = document.getElementById('feed');
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let mode = 'alle', round = [], answered = 0, roundRight = 0, current = null, view = 'today';
+
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function rich(s) { return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>'); }
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function btn(cls, label, fn) { const b = el('button', cls, label); b.type = 'button'; if (fn) b.addEventListener('click', fn); return b; }
+
+function dateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dayStreak() {
+  const d = new Date();
+  if (!state.days[dateKey(d)]) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (state.days[dateKey(d)]) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const LVL = 150;
+function level() { return Math.floor(state.xp / LVL) + 1; }
+function wrongIds() { return Object.keys(state.stats).filter(id => state.stats[id].last === false); }
+function rightCount(pred) { return Q.filter(q => pred(q) && state.stats[q.id] && state.stats[q.id].r > 0).length; }
+
+// ---------- TOAST, MODAL ----------
+const toastQ = []; let toastTimer;
+function toast(msg) { toastQ.push(msg); if (toastQ.length === 1) nextToast(); }
+function nextToast() {
+  const t = document.getElementById('toast');
+  if (!toastQ.length) { t.hidden = true; return; }
+  t.textContent = toastQ[0]; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastQ.shift(); nextToast(); }, 1700);
+}
+function modal(title, text) {
+  document.getElementById('mTitle').textContent = title;
+  document.getElementById('mText').textContent = text;
+  document.getElementById('modal').hidden = false;
+  document.getElementById('mOk').focus();
+}
+document.getElementById('mOk').addEventListener('click', () => { document.getElementById('modal').hidden = true; });
+
+// ---------- XP OG MERKER ----------
+const BADGES = [
+  { id: 'forste', name: 'Første treff', desc: 'Svar riktig på din første oppgave', test: () => rightCount(() => true) >= 1 },
+  { id: 'rekke10', name: 'På en rull', desc: '10 riktige på rad', test: () => state.bestStreak >= 10 },
+  { id: 'lokke', name: 'Løkkemester', desc: 'Alle løkkeoppgavene riktig', test: () => Q.filter(q => q.t === 'Løkker').every(q => state.stats[q.id] && state.stats[q.id].r > 0) },
+  { id: 'kaffe', name: 'Kaffeslurper', desc: '10 ulike Java-oppgaver riktig', test: () => rightCount(q => q.s === 'java') >= 10 },
+  { id: 'logiker', name: 'Logiker', desc: '10 ulike matteoppgaver riktig', test: () => rightCount(q => q.s === 'math') >= 10 },
+  { id: 'feilfinner', name: 'Feilfinner', desc: 'Finn 3 feil i koden', test: () => Object.values(state.bugs).filter(x => x).length >= 3 },
+  { id: 'sporer', name: 'Kodesporer', desc: 'Se 3 koder kjøre ferdig', test: () => Object.keys(state.traces).length >= 3 },
+  { id: 'sveip', name: 'Sveipeproff', desc: 'Sveip 20 kort', test: () => state.swiped >= 20 },
+  { id: 'fokus', name: 'Laserfokus', desc: 'Fullfør en fokusøkt', test: () => state.focusDone >= 1 },
+  { id: 'dag3', name: 'Tre på rad', desc: 'Dagens dose 3 dager på rad', test: () => dayStreak() >= 3 },
+  { id: 'dag7', name: 'Uke-streak', desc: 'Dagens dose 7 dager på rad', test: () => dayStreak() >= 7 },
+  { id: 'niva5', name: 'Nivå 5', desc: 'Samle 600 XP', test: () => level() >= 5 },
+  { id: 'oblig', name: 'Oblig-proff', desc: 'Alle oppgavene fra obligene riktig', test: () => Q.filter(q => q.src).every(q => state.stats[q.id] && state.stats[q.id].r > 0) }
+];
+function checkBadges() {
+  BADGES.forEach(b => {
+    if (!state.badges.includes(b.id) && b.test()) { state.badges.push(b.id); toast('Nytt merke: ' + b.name); }
+  });
+  save();
+}
+function addXP(n, quiet) {
+  const before = level();
+  state.xp += n;
+  save();
+  if (level() > before) toast('Nivå ' + level() + '! Godt jobba.');
+  else if (!quiet) toast('+' + n + ' XP');
+  checkBadges();
+  updateHeader();
+}
+function scoreAnswer(ok) {
+  state.streak = ok ? state.streak + 1 : 0;
+  state.bestStreak = Math.max(state.bestStreak, state.streak);
+}
+
+function updateHeader() {
+  document.getElementById('lvl').textContent = level();
+  document.getElementById('xpfill').style.width = ((state.xp % LVL) / LVL * 100) + '%';
+  document.getElementById('streak').textContent = state.streak;
+  document.getElementById('tab-feil').textContent = 'Øv på feil (' + (wrongIds().length + Object.values(state.bugs).filter(x => x === false).length) + ')';
+  document.getElementById('prog').style.width = round.length ? (answered / round.length * 100) + '%' : '0';
+}
+
+// ---------- KORT I FEEDEN ----------
+function meta(left, right) { return el('div', 'meta', '<span class="subj">' + esc(left) + '</span><span>' + esc(right) + '</span>'); }
+function subjName(s) { return s === 'java' ? 'Java · DAT100' : 'Matte · MAT101'; }
+
+function markDone(c, graded, ok) {
+  if (c.dataset.done) return false;
+  c.dataset.done = '1';
+  answered++;
+  if (graded && ok) roundRight++;
+  if (fokus) { fokus.count++; if (graded && ok) fokus.right++; }
+  const end = feed.querySelector('.end .big');
+  if (end) end.textContent = roundRight + '/' + gradedCount();
+  if (mode === 'dagens' && answered === round.length) completeDaily();
+  updateHeader();
+  return true;
+}
+function nextBtn(c) { return btn('btn', 'Neste ↓', () => goNext(c)); }
+function goNext(c) {
+  const n = c.nextElementSibling;
+  if (n) n.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+}
+
+function quizCard(q, n, total) {
+  const c = el('section', 'card ' + q.s);
+  const inner = el('div', 'inner');
+  inner.appendChild(meta(subjName(q.s), (q.src ? q.src + ' · ' : '') + q.t + ' · ' + n + '/' + total));
+  const h = el('h2', 'q'); h.textContent = q.q; inner.appendChild(h);
+  if (q.c) { const p = el('pre'); p.textContent = q.c; inner.appendChild(p); }
+  const opts = el('div', 'opts');
+  shuffle(q.o.map((_, i) => i)).forEach((oi, pos) => {
+    const b = btn('opt', '<span class="k">' + (pos + 1) + '</span><span class="t"></span>', () => answer(c, q, oi));
+    b.id = 'opt-' + q.id + '-' + oi; b.dataset.i = oi;
+    b.querySelector('.t').textContent = q.o[oi];
+    opts.appendChild(b);
+  });
+  inner.appendChild(opts);
+  const fb = el('div', 'fb'); fb.hidden = true; inner.appendChild(fb);
+  if (n === 1) inner.appendChild(el('p', 'hint', 'Trykk på et svar, eller bruk tastene 1–4. Scroll for neste.'));
+  c.appendChild(inner);
+  return c;
+}
+function answer(c, q, oi) {
+  if (c.dataset.done) return;
+  const ok = oi === q.a;
+  c.querySelectorAll('.opt').forEach(b => {
+    b.disabled = true;
+    const i = +b.dataset.i;
+    b.classList.add(i === q.a ? 'right' : i === oi ? 'wrong' : 'dim');
+  });
+  const s = state.stats[q.id] || { r: 0, f: 0 };
+  ok ? s.r++ : s.f++; s.last = ok; state.stats[q.id] = s;
+  scoreAnswer(ok);
+  markDone(c, true, ok);
+  addXP(ok ? 10 : 2);
+  const fb = c.querySelector('.fb');
+  fb.innerHTML = '<p class="verdict ' + (ok ? 'ok">Riktig!' : 'no">Ikke helt. Riktig svar: ' + esc(q.o[q.a])) + '</p><p>' + rich(q.w) + '</p>';
+  fb.appendChild(nextBtn(c));
+  fb.hidden = false;
+  const hint = c.querySelector('.hint'); if (hint) hint.remove();
+}
+
+function traceCard(tr, n, total) {
+  const c = el('section', 'card ' + tr.s);
+  const inner = el('div', 'inner');
+  inner.appendChild(meta(tr.code ? 'Se koden kjøre' : 'Se det regnes ut', (tr.src ? tr.src + ' · ' : '') + tr.t + ' · ' + n + '/' + total));
+  const h = el('h2', 'q'); h.textContent = tr.title; inner.appendChild(h);
+  let viewEl, lineEls = [], rowEls = [];
+  if (tr.code) {
+    viewEl = el('div', 'code');
+    tr.code.forEach((line, i) => {
+      const d = el('div', 'ln', '<span class="no">' + (i + 1) + '</span><span class="lt"></span>');
+      d.querySelector('.lt').textContent = line || ' ';
+      viewEl.appendChild(d); lineEls.push(d);
+    });
+  } else {
+    viewEl = el('div', 'tbl tt');
+    const t = el('table'); const hr = el('tr');
+    tr.table.head.forEach((x, ci) => { const th = el('th'); th.textContent = x; th.dataset.c = ci; hr.appendChild(th); });
+    t.appendChild(hr);
+    tr.table.rows.forEach(row => {
+      const r = el('tr');
+      row.forEach((x, ci) => { const td = el('td'); td.dataset.c = ci; td.dataset.v = x; r.appendChild(td); });
+      t.appendChild(r); rowEls.push(r);
+    });
+    viewEl.appendChild(t);
+  }
+  inner.appendChild(viewEl);
+  const vars = el('div', 'vars'), out = el('div', 'out'), note = el('p', 'note');
+  if (tr.code) { inner.appendChild(vars); inner.appendChild(out); }
+  inner.appendChild(note);
+  const ctrl = el('div', 'ctrl');
+  const prev = btn('ghost', '◀ Forrige'), play = btn('ghost', 'Spill av'), next = btn('ghost', 'Neste ▶'), count = el('span', 'count');
+  ctrl.append(prev, play, next, count);
+  inner.appendChild(ctrl);
+  c.appendChild(inner);
+
+  let i = 0, timer = null;
+  const last = tr.steps.length - 1;
+  function stop() { clearInterval(timer); timer = null; play.textContent = i === last ? 'Spill av på nytt' : 'Spill av'; }
+  function render() {
+    const st = tr.steps[i];
+    if (tr.code) {
+      lineEls.forEach((d, k) => d.classList.toggle('on', k === st.l));
+      vars.innerHTML = Object.entries(st.v).map(([k, v]) => '<span class="var"><b>' + esc(k) + '</b> = ' + esc(v) + '</span>').join('');
+      const prints = []; let ret = null;
+      for (let k = 0; k <= i; k++) { if (tr.steps[k].o != null) prints.push(tr.steps[k].o); if (tr.steps[k].ret != null) ret = tr.steps[k].ret; }
+      const hasRet = tr.steps.some(x => x.ret != null), parts = [];
+      if (prints.length || !hasRet) parts.push('Utskrift: <b>' + (prints.length ? esc(prints.join('  ·  ')) : '–') + '</b>');
+      if (hasRet) parts.push('Returnerer: <b>' + (ret != null ? esc(ret) : '–') + '</b>');
+      out.innerHTML = parts.join(' &nbsp;&nbsp; ');
+    } else {
+      rowEls.forEach((r, ri) => {
+        r.classList.toggle('on', ri === st.r && !st.hl);
+        r.querySelectorAll('td').forEach(td => {
+          const ci = +td.dataset.c, hidden = tr.table.hide.includes(ci) && ri > st.r;
+          td.textContent = hidden ? '?' : td.dataset.v;
+          td.classList.toggle('hid', hidden);
+          td.classList.toggle('hl', !!(st.hl && st.hl.includes(ci)));
+        });
+      });
+      viewEl.querySelectorAll('th').forEach(th => th.classList.toggle('hl', !!(st.hl && st.hl.includes(+th.dataset.c))));
+    }
+    note.textContent = st.n;
+    count.textContent = (i + 1) + '/' + tr.steps.length;
+    prev.disabled = i === 0; next.disabled = i === last;
+    if (i === last) {
+      stop();
+      if (markDone(c, false, false) && !state.traces[tr.id]) { state.traces[tr.id] = true; addXP(5); }
+      if (!c.querySelector('.ctrl .btn')) ctrl.appendChild(nextBtn(c));
+    }
+  }
+  prev.addEventListener('click', () => { stop(); if (i > 0) { i--; render(); } });
+  next.addEventListener('click', () => { stop(); if (i < last) { i++; render(); } });
+  play.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (i === last) i = 0;
+    render();
+    play.textContent = 'Pause';
+    timer = setInterval(() => { if (i < last) { i++; render(); } else stop(); }, reduce ? 1600 : 1200);
+  });
+  render();
+  return c;
+}
+
+function bugCard(bg, n, total) {
+  const c = el('section', 'card java');
+  const inner = el('div', 'inner');
+  inner.appendChild(meta('Finn feilen', (bg.src ? bg.src + ' · ' : '') + bg.t + ' · ' + n + '/' + total));
+  const h = el('h2', 'q'); h.textContent = bg.q; inner.appendChild(h);
+  const code = el('div', 'bugcode');
+  bg.lines.forEach((line, i) => {
+    const b = btn('bl', '<span class="no">' + (i + 1) + '</span><span class="lt"></span>', () => pickBug(i));
+    b.id = 'bug-' + bg.id + '-' + i;
+    b.querySelector('.lt').textContent = line || ' ';
+    code.appendChild(b);
+  });
+  inner.appendChild(code);
+  const fb = el('div', 'fb'); fb.hidden = true; inner.appendChild(fb);
+  c.appendChild(inner);
+  function pickBug(i) {
+    if (c.dataset.done) return;
+    const ok = i === bg.bug;
+    code.querySelectorAll('.bl').forEach((b, k) => {
+      b.disabled = true;
+      if (k === bg.bug) b.classList.add('right'); else if (k === i) b.classList.add('wrong');
+    });
+    state.bugs[bg.id] = ok;
+    scoreAnswer(ok);
+    markDone(c, true, ok);
+    addXP(ok ? 15 : 2);
+    fb.innerHTML = '<p class="verdict ' + (ok ? 'ok">Funnet! Linje ' + (bg.bug + 1) + '.' : 'no">Ikke den. Feilen er på linje ' + (bg.bug + 1) + '.') + '</p><p>' + rich(bg.why) + '</p><p class="plabel">Slik blir det riktig</p>';
+    const p = el('pre'); p.textContent = bg.fix; fb.appendChild(p);
+    fb.appendChild(nextBtn(c));
+    fb.hidden = false;
+  }
+  return c;
+}
+
+function videoCard(v, n, total) {
+  const c = el('section', 'card ' + v.s);
+  const inner = el('div', 'inner');
+  inner.appendChild(meta('Video · ' + v.who, v.t + ' · ' + n + '/' + total));
+  const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(v.q);
+  const pl = el('a', 'play', '<i></i>'); pl.href = url; pl.target = '_blank'; pl.rel = 'noopener'; pl.setAttribute('aria-label', 'Søk etter videoen på YouTube');
+  inner.appendChild(pl);
+  const h = el('h2', 'q'); h.textContent = v.title; inner.appendChild(h);
+  inner.appendChild(el('p', 'ingress', 'Åpner et YouTube-søk i en ny fane. Velg et kort klipp, og kom tilbake hit etterpå.'));
+  const row = el('div', 'row');
+  const a = el('a', 'btn', 'Se på YouTube'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  row.appendChild(a);
+  if (state.videos[v.id]) row.appendChild(el('span', 'seen', 'Sett ✓'));
+  else row.appendChild(btn('ghost', 'Jeg har sett den', e => {
+    state.videos[v.id] = true; markDone(c, false, false); addXP(5);
+    e.currentTarget.replaceWith(el('span', 'seen', 'Sett ✓'));
+  }));
+  inner.appendChild(row);
+  c.appendChild(inner);
+  return c;
+}
+
+function gradedCount() { return round.filter(x => x.k === 'q' || x.k === 'bug').length; }
+
+function endCard() {
+  const c = el('section', 'card end');
+  const inner = el('div', 'inner');
+  const g = gradedCount();
+  inner.appendChild(el('h2', 'q', mode === 'dagens' ? 'Dagens dose er ferdig' : 'Runden er ferdig'));
+  if (g) {
+    inner.appendChild(el('div', 'big', roundRight + '/' + g));
+    inner.appendChild(el('p', null, 'riktige svar. Det du bommet på, havner i «Øv på feil».'));
+  }
+  const row = el('div', 'row');
+  if (mode === 'dagens') row.appendChild(btn('btn', 'Tilbake til Dagens', () => show('today')));
+  row.appendChild(btn(mode === 'dagens' ? 'ghost' : 'btn', 'Ny runde', () => start(mode, topicArt)));
+  inner.appendChild(row);
+  c.appendChild(inner);
+  return c;
+}
+function emptyCard() {
+  const c = el('section', 'card');
+  const inner = el('div', 'inner');
+  inner.appendChild(el('h2', 'q', 'Ingen feil å øve på'));
+  inner.appendChild(el('p', null, 'Oppgaver du svarer feil på, samles her. Svar riktig på dem senere, så forsvinner de fra lista.'));
+  inner.appendChild(btn('btn', 'Øv på alle', () => start('alle')));
+  c.appendChild(inner);
+  return c;
+}
+
+// ---------- RUNDER ----------
+let io, topicArt = null;
+function topicQs(a) { return Q.filter(q => q.s === a.s && a.topics.includes(q.t)); }
+function byPriority(list, pri) { return shuffle(list).sort((a, b) => pri(a) - pri(b)); }
+function buildRound(m, art) {
+  const items = [];
+  const add = (k, arr) => arr.forEach(d => items.push({ k, d }));
+  if (art) {
+    add('q', topicQs(art));
+    add('trace', T.filter(t => t.s === art.s && art.topics.includes(t.t)));
+    add('bug', B.filter(b => b.s === art.s && art.topics.includes(b.t)));
+    add('video', V.filter(v => v.s === art.s && art.topics.includes(v.t)));
+  } else if (m === 'feil') {
+    const w = new Set(wrongIds());
+    add('q', Q.filter(q => w.has(q.id)));
+    add('bug', B.filter(b => state.bugs[b.id] === false));
+  } else if (m === 'oblig') { add('q', Q.filter(x => x.src)); add('trace', T.filter(x => x.src)); add('bug', B.filter(x => x.src)); }
+  else if (m === 'bugs') add('bug', B);
+  else if (m === 'traces') add('trace', T);
+  else if (m === 'dagens') {
+    const w = new Set(wrongIds());
+    add('q', byPriority(Q, q => w.has(q.id) ? 0 : !state.stats[q.id] ? 1 : 2).slice(0, 3));
+    add('bug', byPriority(B, b => state.bugs[b.id] === false ? 0 : state.bugs[b.id] === undefined ? 1 : 2).slice(0, 1));
+    add('trace', byPriority(T, t => state.traces[t.id] ? 1 : 0).slice(0, 1));
+  } else {
+    const f = x => m === 'alle' || x.s === m;
+    add('q', Q.filter(f)); add('trace', T.filter(f)); add('bug', B.filter(f)); add('video', V.filter(f));
+  }
+  return shuffle(items);
+}
+const CHIP = { dagens: 'Dagens dose', bugs: 'Finn feilen', traces: 'Se koden kjøre', oblig: 'Fra obligene' };
+function start(m, art) {
+  mode = m; topicArt = art || null;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-pressed', String(!art && t.dataset.mode === m)));
+  const chip = document.getElementById('topicChip');
+  const label = art ? 'Tema: ' + art.short : CHIP[m];
+  chip.hidden = !label;
+  if (label) chip.textContent = label + ' ✕';
+  round = buildRound(m, art); answered = 0; roundRight = 0;
+  feed.innerHTML = '';
+  if (!round.length) feed.appendChild(emptyCard());
+  else {
+    round.forEach((it, i) => {
+      const f = { q: quizCard, trace: traceCard, bug: bugCard, video: videoCard }[it.k];
+      feed.appendChild(f(it.d, i + 1, round.length));
+    });
+    feed.appendChild(endCard());
+  }
+  feed.scrollTop = 0;
+  if (io) io.disconnect();
+  io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) current = e.target; }), { root: feed, threshold: 0.55 });
+  feed.querySelectorAll('.card').forEach(c => io.observe(c));
+  current = feed.firstElementChild;
+  show('quiz');
+  updateHeader();
+}
+function completeDaily() {
+  const k = dateKey(new Date());
+  if (state.days[k]) return;
+  state.days[k] = true;
+  save();
+  addXP(25, true);
+  toast('Dagens dose fullført! ' + dayStreak() + ' ' + (dayStreak() === 1 ? 'dag' : 'dager') + ' på rad.');
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  if (t.dataset.mode === 'swipe') { startSwipe(); show('swipe'); } else start(t.dataset.mode);
+}));
+document.getElementById('topicChip').addEventListener('click', () => start('alle'));
+
+// ---------- SWIPE ----------
+let deck = [], sw = { known: 0 };
+function startSwipe() {
+  deck = byPriority(F, f => state.swipe[f.id] || 0).slice(0, 12);
+  sw = { known: 0, total: deck.length };
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.mode === 'swipe')));
+  document.getElementById('topicChip').hidden = true;
+  renderSwipe();
+}
+function flashEl(f, under) {
+  const d = el('div', 'flash ' + f.s + (under ? ' under' : ''));
+  d.appendChild(el('span', 'kicker', f.s === 'java' ? 'Java' : 'Matte'));
+  const front = el('div', 'face front', rich(f.f));
+  const back = el('div', 'face back', rich(f.b)); back.hidden = true;
+  d.append(front, back, el('span', 'tap', 'Trykk for å snu'), el('span', 'stamp yes', 'KAN'), el('span', 'stamp no', 'ØV MER'));
+  return d;
+}
+function renderSwipe() {
+  const root = document.getElementById('swipe');
+  root.innerHTML = '';
+  const w = el('div', 'swrap');
+  if (!deck.length) {
+    w.appendChild(el('h2', 'headline', 'Bunken er tom'));
+    w.appendChild(el('p', 'ingress', 'Du kunne ' + sw.known + ' av ' + sw.total + ' kort. Kortene du ikke kunne, kommer oftere neste gang.'));
+    w.appendChild(btn('bigstart', 'Ny bunke', startSwipe));
+    root.appendChild(w);
+    return;
+  }
+  w.appendChild(el('div', 'swinfo', '<span>Igjen: <b>' + deck.length + '</b></span><span>Kan: <b>' + sw.known + '</b></span><span>Sveip, eller bruk ← og →</span>'));
+  const stack = el('div', 'stack');
+  if (deck[1]) stack.appendChild(flashEl(deck[1], true));
+  const card = flashEl(deck[0], false);
+  stack.appendChild(card);
+  w.appendChild(stack);
+  const ctrl = el('div', 'swctrl');
+  ctrl.append(btn('ghost no-btn', '← Øv mer', () => decide(false)), btn('ghost', 'Snu', flip), btn('ghost yes-btn', 'Kan →', () => decide(true)));
+  w.appendChild(ctrl);
+  root.appendChild(w);
+
+  let x0 = null, dx = 0, busy = false;
+  function flip() {
+    const f = card.querySelector('.front'), b = card.querySelector('.back');
+    const toBack = !f.hidden; f.hidden = toBack; b.hidden = !toBack;
+    card.classList.toggle('flipped', toBack);
+    card.querySelector('.tap').textContent = toBack ? 'Sveip: kunne du det?' : 'Trykk for å snu';
+  }
+  function decide(yes) {
+    if (busy) return; busy = true;
+    card.classList.remove('dragging');
+    card.style.transform = 'translateX(' + (yes ? 130 : -130) + '%) rotate(' + (yes ? 18 : -18) + 'deg)';
+    card.style.opacity = '0';
+    setTimeout(() => {
+      const f = deck.shift();
+      state.swiped++;
+      if (yes) { state.swipe[f.id] = Math.min((state.swipe[f.id] || 0) + 1, 3); sw.known++; addXP(2, true); }
+      else { state.swipe[f.id] = 0; deck.splice(Math.min(3, deck.length), 0, f); save(); checkBadges(); }
+      renderSwipe();
+    }, reduce ? 0 : 200);
+  }
+  w.decide = decide; w.flip = flip;
+  card.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; card.setPointerCapture(e.pointerId); card.classList.add('dragging'); });
+  card.addEventListener('pointermove', e => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    card.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 18) + 'deg)';
+    card.querySelector('.stamp.yes').style.opacity = Math.max(0, Math.min(1, dx / 90));
+    card.querySelector('.stamp.no').style.opacity = Math.max(0, Math.min(1, -dx / 90));
+  });
+  const up = () => {
+    if (x0 === null) return;
+    x0 = null; card.classList.remove('dragging');
+    if (Math.abs(dx) > 90) decide(dx > 0);
+    else {
+      card.style.transform = '';
+      card.querySelectorAll('.stamp').forEach(s => { s.style.opacity = 0; });
+      if (Math.abs(dx) < 6) flip();
+    }
+  };
+  card.addEventListener('pointerup', up);
+  card.addEventListener('pointercancel', up);
+}
+
+// ---------- FOKUSMODUS ----------
+let fokus = null, focusTimer = null;
+function startFocus() {
+  fokus = { end: Date.now() + 10 * 60000, count: 0, right: 0 };
+  document.body.classList.add('focus');
+  if (!round.length || mode === 'dagens') start('alle'); else show('quiz');
+  tickFocus();
+  focusTimer = setInterval(tickFocus, 1000);
+}
+function tickFocus() {
+  if (!fokus) return;
+  const left = Math.max(0, fokus.end - Date.now());
+  const s = Math.ceil(left / 1000);
+  document.getElementById('focusTime').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  if (left <= 0) endFocus(true);
+}
+function endFocus(done) {
+  clearInterval(focusTimer);
+  document.body.classList.remove('focus');
+  const f = fokus; fokus = null;
+  if (done && f) {
+    state.focusDone++; save();
+    addXP(20, true);
+    modal('Fokusøkta er ferdig', 'Du tok ' + f.count + ' kort og fikk ' + f.right + ' riktige på 10 minutter. Ta en pause nå, du har fortjent det.');
+  }
+}
+document.getElementById('focusBtn').addEventListener('click', startFocus);
+document.getElementById('focusStop').addEventListener('click', () => endFocus(false));
+
+// ---------- VISNINGER ----------
+const readEl = document.getElementById('read');
+const todayEl = document.getElementById('today');
+function show(v) {
+  view = v;
+  feed.hidden = v !== 'quiz';
+  document.getElementById('swipe').hidden = v !== 'swipe';
+  readEl.hidden = v !== 'read';
+  todayEl.hidden = v !== 'today';
+  document.getElementById('quizbar').hidden = !(v === 'quiz' || v === 'swipe');
+  document.getElementById('progwrap').hidden = v !== 'quiz';
+  const navView = v === 'swipe' ? 'quiz' : v;
+  document.querySelectorAll('.navbtn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === navView)));
+  if (v === 'today') renderToday();
+}
+document.querySelectorAll('.navbtn').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.view;
+  if (v === 'read') { renderFront(); show('read'); }
+  else if (v === 'quiz') { if (!round.length) start('alle'); else show('quiz'); }
+  else show('today');
+}));
+
+// ---------- DAGENS ----------
+function renderToday() {
+  todayEl.innerHTML = '';
+  const w = el('div', 'wrap');
+  const doneToday = !!state.days[dateKey(new Date())];
+  const mast = el('div', 'mast');
+  mast.appendChild(el('h1', null, 'Dagens dose'));
+  mast.appendChild(el('p', null, doneToday ? 'Du er ferdig for i dag. Vil du ta noen til, er det bare å trykke.' : 'Fem korte kort. Rundt tre minutter. Så er du ferdig for i dag.'));
+  mast.appendChild(el('p', 'countdown', countdownText()));
+  w.appendChild(mast);
+  const row = el('div', 'row');
+  row.appendChild(btn('bigstart', doneToday ? 'Ta 5 kort til' : 'Start dagens dose', () => start('dagens')));
+  if (doneToday) row.appendChild(el('span', 'donepill', 'Fullført i dag ✓'));
+  w.appendChild(row);
+
+  const dash = el('div', 'dash');
+
+  const sp = el('section', 'panel');
+  const n = dayStreak();
+  sp.appendChild(el('span', 'plabel', 'Streak'));
+  sp.appendChild(el('div', 'lvlrow', '<span class="streaknum amp">' + n + '</span><span class="ingress">' + (n === 1 ? 'dag' : 'dager') + ' på rad</span>'));
+  const cal = el('div', 'cal');
+  ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø'].forEach(d => cal.appendChild(el('span', 'h', d)));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const startD = new Date(today); startD.setDate(today.getDate() - ((today.getDay() + 6) % 7) - 21);
+  for (let k = 0; k < 28; k++) {
+    const d = new Date(startD); d.setDate(startD.getDate() + k);
+    const key = dateKey(d);
+    const cls = 'day' + (state.days[key] ? ' done' : '') + (key === dateKey(today) ? ' today' : '') + (d > today ? ' future' : '');
+    const cell = el('span', cls); cell.title = d.getDate() + '.' + (d.getMonth() + 1) + (state.days[key] ? ': øvd' : '');
+    cal.appendChild(cell);
+  }
+  sp.appendChild(cal);
+  dash.appendChild(sp);
+
+  const lp = el('section', 'panel');
+  lp.appendChild(el('span', 'plabel', 'Nivå'));
+  lp.appendChild(el('div', 'lvlrow', '<span class="lvl">' + level() + '</span><span class="ingress">' + state.xp + ' XP totalt</span>'));
+  const bar = el('span', 'xpbar', '<span style="width:' + ((state.xp % LVL) / LVL * 100) + '%"></span>');
+  lp.appendChild(bar);
+  lp.appendChild(el('p', 'ingress', (LVL - state.xp % LVL) + ' XP til nivå ' + (level() + 1) + '. Riktig svar gir 10 XP, en funnet feil gir 15, og dagens dose gir 25.'));
+  lp.appendChild(el('span', 'plabel', 'Snarveier'));
+  const sh = el('div', 'shorts');
+  [['Se koden kjøre', 'Animert, steg for steg', () => start('traces')],
+   ['Finn feilen', 'Trykk på linja som er feil', () => start('bugs')],
+   ['Swipe-kort', 'Kan eller kan ikke?', () => { startSwipe(); show('swipe'); }],
+   ['Fokus 10 min', 'Alt annet skjules', startFocus],
+   ['Fra obligene', 'Innleveringer, JavEl og labber', () => start('oblig')],
+   ['Les en artikkel', 'JavEl, matriser, relasjoner …', () => { renderFront(); show('read'); }]].forEach(([a, b, fn]) => {
+    sh.appendChild(btn('short', '<b>' + a + '</b><span>' + b + '</span>', fn));
+  });
+  lp.appendChild(sh);
+  dash.appendChild(lp);
+
+  const bp = el('section', 'panel');
+  bp.appendChild(el('span', 'plabel', 'Merker · ' + state.badges.length + ' av ' + BADGES.length));
+  const bs = el('div', 'badges');
+  BADGES.forEach(b => {
+    const on = state.badges.includes(b.id);
+    bs.appendChild(el('div', 'badge ' + (on ? 'on' : 'off'), '<b>' + esc(b.name) + '</b><span>' + esc(b.desc) + '</span>'));
+  });
+  bp.appendChild(bs);
+  bp.style.gridColumn = '1 / -1';
+  dash.appendChild(bp);
+
+  w.appendChild(dash);
+  todayEl.appendChild(w);
+  todayEl.scrollTop = 0;
+}
+
+// ---------- LES ----------
+function textOf(a) {
+  let t = a.title + ' ' + a.ingress;
+  a.body.forEach(b => { t += ' ' + (Array.isArray(b[1]) ? b[1].flat().join(' ') : b[1]); });
+  return t;
+}
+function readTime(a) { return Math.max(2, Math.round(textOf(a).split(/\s+/).length / 170)); }
+function visual(a, cls) { const v = el('div', 'visual' + (cls ? ' ' + cls : '')); v.textContent = a.hero; v.setAttribute('aria-hidden', 'true'); return v; }
+function textBlock(a, tag, withIngress) {
+  const t = el('div', 'txt');
+  t.appendChild(el('span', 'kicker', esc(a.kicker)));
+  const h = el(tag, 'headline'); h.textContent = a.title; t.appendChild(h);
+  if (withIngress) { const p = el('p', 'ingress'); p.textContent = a.ingress; t.appendChild(p); }
+  t.appendChild(el('span', 'rt', readTime(a) + ' min lesing · ' + topicQs(a).length + ' øveoppgaver'));
+  return t;
+}
+function itemBtn(a) {
+  const b = btn('item ' + a.s, '', () => openArticle(a)); b.id = 'item-' + a.id;
+  b.appendChild(visual(a, 'sm'));
+  b.appendChild(textBlock(a, 'h3', true));
+  return b;
+}
+function renderFront() {
+  readEl.innerHTML = '';
+  const w = el('div', 'wrap');
+  const mast = el('div', 'mast');
+  mast.appendChild(el('h1', null, 'Forklart'));
+  mast.appendChild(el('p', null, 'Korte artikler om pensum i DAT100 og MAT101. Les en artikkel, og øv på temaet rett etterpå.'));
+  w.appendChild(mast);
+  const leadA = A.find(a => a.id === 'javel') || A[0];
+  const lead = btn('lead ' + leadA.s, '', () => openArticle(leadA)); lead.id = 'lead-' + leadA.id;
+  lead.appendChild(visual(leadA));
+  lead.appendChild(textBlock(leadA, 'h2', true));
+  w.appendChild(lead);
+  const cols = el('div', 'cols');
+  [['java', 'DAT100 · Java'], ['math', 'MAT101 · Diskret matematikk']].forEach(([s, name]) => {
+    const col = el('section', 'col');
+    col.appendChild(el('h2', null, name));
+    A.filter(a => a.s === s && a !== leadA).forEach(a => col.appendChild(itemBtn(a)));
+    cols.appendChild(col);
+  });
+  w.appendChild(cols);
+  readEl.appendChild(w);
+  readEl.scrollTop = 0;
+}
+function block(b) {
+  const [type, v] = b;
+  if (type === 'p') return el('p', null, rich(v));
+  if (type === 'h') { const h = el('h3'); h.textContent = v; return h; }
+  if (type === 'code') { const p = el('pre'); p.textContent = v; return p; }
+  if (type === 'ul' || type === 'ol') { const l = el(type); v.forEach(x => l.appendChild(el('li', null, rich(x)))); return l; }
+  if (type === 'tip') { const d = el('div', 'tip'); d.appendChild(el('span', 'lbl', 'Eksamenstips')); d.appendChild(el('p', null, rich(v))); return d; }
+  if (type === 'table') {
+    const wrap = el('div', 'tbl'), t = el('table');
+    v.forEach((row, i) => { const tr = el('tr'); row.forEach(cell => tr.appendChild(el(i === 0 ? 'th' : 'td', null, rich(cell)))); t.appendChild(tr); });
+    wrap.appendChild(t);
+    return wrap;
+  }
+  return el('div');
+}
+function openArticle(a) {
+  readEl.innerHTML = '';
+  const w = el('div', 'wrap');
+  const art = el('article', 'article ' + a.s);
+  art.appendChild(btn('back', '← Alle artikler', renderFront));
+  art.appendChild(el('span', 'kicker', esc(a.kicker)));
+  const h = el('h1', 'headline'); h.textContent = a.title; art.appendChild(h);
+  const ing = el('p', 'ingress'); ing.textContent = a.ingress; art.appendChild(ing);
+  art.appendChild(el('span', 'rt', 'Kaffe & Logikk · ' + readTime(a) + ' min lesing'));
+  art.appendChild(visual(a));
+  const body = el('div', 'body');
+  a.body.forEach(b => body.appendChild(block(b)));
+  art.appendChild(body);
+  const n = buildRound('tema', a).length;
+  const cta = el('div', 'cta');
+  cta.appendChild(el('p', null, '<b>Test deg selv.</b> ' + n + ' kort om ' + esc(a.short.toLowerCase()) + ': oppgaver, animasjoner og videoer.'));
+  cta.appendChild(btn('btn', 'Start øving', () => start('tema', a)));
+  art.appendChild(cta);
+  const more = el('section', 'more');
+  more.appendChild(el('h2', null, 'Les også'));
+  A.filter(x => x.s === a.s && x !== a).slice(0, 3).forEach(x => more.appendChild(itemBtn(x)));
+  art.appendChild(more);
+  w.appendChild(art);
+  readEl.appendChild(w);
+  readEl.scrollTop = 0;
+}
+
+// ---------- TASTATUR ----------
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('modal').hidden) { if (e.key === 'Escape' || e.key === 'Enter') { document.getElementById('modal').hidden = true; e.preventDefault(); } return; }
+  if (e.target.closest('input, textarea')) return;
+  if (view === 'swipe') {
+    const w = document.querySelector('#swipe .swrap');
+    if (!w || !w.decide) return;
+    if (e.key === 'ArrowRight') { w.decide(true); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { w.decide(false); e.preventDefault(); }
+    else if (e.key === ' ') { w.flip(); e.preventDefault(); }
+    return;
+  }
+  if (view !== 'quiz' || !current) return;
+  const n = parseInt(e.key, 10);
+  const opts = current.querySelectorAll('.opt, .bl');
+  if (n >= 1 && n <= opts.length && !current.dataset.done) { opts[n - 1].click(); e.preventDefault(); }
+  else if (e.key === 'Enter' && current.dataset.done) { goNext(current); e.preventDefault(); }
+});
+
+function countdownText() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const d = s => Math.round((new Date(s + 'T00:00:00') - now) / 86400000);
+  const j = d('2026-11-24'), m = d('2026-12-04');
+  const fmt = (n, navn) => n > 0 ? navn + ' om <b>' + n + '</b> dager' : n === 0 ? navn + ' <b>i dag</b>' : navn + ' er ferdig';
+  return fmt(j, 'Java-eksamen') + ' · ' + fmt(m, 'matte-eksamen');
+}
+
+updateHeader();
+checkBadges();
+if (location.hash === '#les') { renderFront(); show('read'); }
+else if (location.hash === '#ov') start('alle');
+else show('today');
+</script>
+
+</body>
+</html>
